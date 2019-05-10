@@ -27,9 +27,9 @@ PersistedCheckpoint = collections.namedtuple('PersistedCheckpoint', ['pid', 'tag
 class Bundle(dict):
 
     @classmethod
-    def from_dict(cls, *args, **kwargs):
-        self = Bundle.__new__(*args, **kwargs)
-        super(Bundle, self).from_dict(*args, **kwargs)
+    def from_dict(cls, **kwargs):
+        self = Bundle.__new__(cls)
+        self.update(kwargs)
         return self
 
     def __init__(self, savable, save_context=None):
@@ -306,8 +306,7 @@ class PicklePersister(Persister):
             self.delete_checkpoint(checkpoint.pid, checkpoint.tag)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class InMemoryPersister(object):
+class InMemoryPersister(Persister):
     """ Mainly to be used in testing/debugging """
 
     def __init__(self, loader=None):
@@ -329,8 +328,11 @@ class InMemoryPersister(object):
 
     def get_process_checkpoints(self, pid):
         cps = []
-        for tag, bundle in self._checkpoints[pid]:
-            cps.append(PersistedCheckpoint(tag, bundle))
+        try:
+            for tag, bundle in self._checkpoints[pid].items():
+                cps.append(PersistedCheckpoint(pid, tag))
+        except KeyError:
+            pass
         return cps
 
     def delete_checkpoint(self, pid, tag=None):
