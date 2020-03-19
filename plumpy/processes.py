@@ -15,6 +15,7 @@ import uuid
 from pika.exceptions import ConnectionClosed
 from tornado import concurrent, gen
 import tornado.stack_context
+import asyncio
 import yaml
 
 import kiwipy
@@ -485,8 +486,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
                 "but another process! ({} != {})".format(self, Process.current())
             _process_stack().pop()
 
-    @gen.coroutine
-    def _run_task(self, callback, *args, **kwargs):
+    async def _run_task(self, callback, *args, **kwargs):
         """
         This method should be used to run all Process related functions and coroutines.
         If there is an exception the process will enter the EXCEPTED state.
@@ -498,9 +498,9 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         """
         # Make sure execute is a coroutine
         coro = utils.ensure_coroutine(callback)
-        result = yield tornado.stack_context.run_with_stack_context(
+        result = await tornado.stack_context.run_with_stack_context(
             tornado.stack_context.StackContext(self._process_scope), functools.partial(coro, *args, **kwargs))
-        raise gen.Return(result)
+        return result
 
     # endregion
 
@@ -1068,18 +1068,19 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         return self.future().result()
 
     @ensure_not_closed
-    @gen.coroutine
-    def step(self):
+    async def step(self):
         assert not self.has_terminated(), "Cannot step, already terminated"
+        # print(self._state)
+        # import pdb; pdb.set_trace()
 
         if self.paused:
-            yield self._paused
+            await self._paused
 
         try:
             self._stepping = True
             next_state = None
             try:
-                next_state = yield self._run_task(self._state.execute)
+                next_state = await self._run_task(self._state.execute)
             except process_states.Interruption as exception:
                 # If the interruption was caused by a call to a Process method then there should
                 # be an interrupt action ready to be executed, so just check if the cookie matches
@@ -1108,10 +1109,9 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
             self._stepping = False
             self._set_interrupt_action(None)
 
-    @gen.coroutine
-    def step_until_terminated(self):
+    async def step_until_terminated(self):
         while not self.has_terminated():
-            yield self.step()
+            await self.step()
 
     # endregion
 

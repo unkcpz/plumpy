@@ -7,6 +7,7 @@ import inspect
 import logging
 import threading
 import tornado.gen
+import asyncio
 
 import frozendict
 
@@ -241,13 +242,11 @@ def type_check(obj, expected_type):
 
 
 def ensure_coroutine(fn):
-    if tornado.gen.is_coroutine_function(fn):
+    if asyncio.iscoroutinefunction(fn):
         return fn
     else:
-
-        @tornado.gen.coroutine
-        def wrapper(*args, **kwargs):
-            raise tornado.gen.Return(fn(*args, **kwargs))
+        async def wrapper(*args, **kwargs):
+            return fn(*args, **kwargs)
 
         return wrapper
 

@@ -4,7 +4,8 @@ Module containing future related methods and classes
 
 from __future__ import absolute_import
 import kiwipy
-from tornado import concurrent, gen, ioloop
+import asyncio
+from tornado import gen, ioloop
 
 __all__ = ['Future', 'gather', 'chain', 'copy_future', 'CancelledError', 'create_task']
 
@@ -21,9 +22,11 @@ chain = kiwipy.chain  # pylint: disable=invalid-name
 gather = lambda *args: gen.multi(args)  # pylint: disable=invalid-name
 
 
-class Future(concurrent.Future):
+class Future(asyncio.Future):
     """
-    Plumpy future.  This subclasses tornado's futures to allow for cancellation.
+    Plumpy future.  This subclasses asyncio's futures to allow for cancellation.
+
+    N.B cannot used concurrent.futures.Future since it is not awaitable
     """
     _cancelled = False
 
@@ -31,7 +34,7 @@ class Future(concurrent.Future):
         if self._cancelled:
             raise CancelledError()
 
-        return super(Future, self).result(timeout)
+        return super(Future, self).result()
 
     def cancel(self):
         """Cancel the future and schedule callbacks.
@@ -91,11 +94,11 @@ def create_task(coro, loop=None):
     :param coro: the coroutine to schedule
     :param loop: the event loop to schedule it in
     :return: the future representing the outcome of the coroutine
-    :rtype: :class:`tornado.concurrent.Future`
+    :rtype: :class:`concurrent.futures.Future`
     """
     loop = loop or ioloop.IOLoop.current()
 
-    future = concurrent.Future()
+    future = concurrent.futures.Future()
 
     @gen.coroutine
     def run_task():
