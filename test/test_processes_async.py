@@ -399,10 +399,148 @@ class TestProcess(unittest.TestCase):
             proc = proc_class(loop=loop)
             procs.append(proc)
 
-        futures = [proc.future() for proc in procs]
-
-        await asyncio.gather(*[p.step_until_terminated() for p in procs])
-        await asyncio.gather(*futures)
+        l = await asyncio.gather(*[p.step_until_terminated() for p in procs])
+        futures = await asyncio.gather(*[p.future() for p in procs])
 
         for future, proc_class in zip(futures, test_utils.TEST_PROCESSES):
-            self.assertDictEqual(proc_class.EXPECTED_OUTPUTS, future.result())
+            self.assertDictEqual(proc_class.EXPECTED_OUTPUTS, future)
+
+    def test_invalid_output(self):
+
+        class InvalidOutput(plumpy.Process):
+
+            def run(self):
+                self.out("invalid", 5)
+
+        proc = InvalidOutput()
+        with self.assertRaises(ValueError):
+            proc.execute()
+
+    def test_missing_output(self):
+        proc = test_utils.MissingOutputProcess()
+
+        with self.assertRaises(plumpy.InvalidStateError):
+            proc.successful()
+
+        proc.execute()
+
+        self.assertFalse(proc.successful())
+
+    def test_unsuccessful_result(self):
+        ERROR_CODE = 256
+
+        class Proc(Process):
+
+            @classmethod
+            def define(cls, spec):
+                super(Proc, cls).define(spec)
+
+            def run(self):
+                return plumpy.UnsuccessfulResult(ERROR_CODE)
+
+        proc = Proc()
+        proc.execute()
+
+        self.assertEqual(proc.result(), ERROR_CODE)
+
+    def test_pause_in_process(self):
+        """ Test that we can pause and cancel that by playing within the process """
+
+        test_case = self
+        ioloop = asyncio.get_event_loop()
+
+        class TestPausePlay(plumpy.Process):
+
+            def run(self):
+                fut = self.pause()
+                test_case.assertIsInstance(fut, plumpy.Future)
+
+        listener = plumpy.ProcessListener()
+        listener.on_process_paused = lambda _proc: ioloop.stop()
+
+        proc = TestPausePlay()
+        proc.add_process_listener(listener)
+
+        asyncio.ensure_future(proc.step_until_terminated())
+        ioloop.run_forever()
+        self.assertTrue(proc.paused)
+        self.assertEqual(plumpy.ProcessState.FINISHED, proc.state)
+
+    @pytest.mark.asyncio
+    async def test_pause_play_in_process(self):
+        """ Test that we can pause and play that by playing within the process """
+
+        test_case = self
+
+        class TestPausePlay(plumpy.Process):
+
+            def run(self):
+                fut = self.pause()
+                test_case.assertIsInstance(fut, plumpy.Future)
+                result = self.play()
+                test_case.assertTrue(result)
+
+        proc = TestPausePlay()
+
+        # asyncio.ensure_future(proc.step_until_terminated())
+        await proc.step_until_terminated()
+        self.assertFalse(proc.paused)
+        self.assertEqual(plumpy.ProcessState.FINISHED, proc.state)
+
+    def test_process_stack(self):
+        test_case = self
+
+        class StackTest(plumpy.Process):
+
+            def run(self):
+                test_case.assertIs(self, Process.current())
+
+        proc = StackTest()
+        proc.execute()
+
+    @pytest.mark.asyncio
+    async def test_process_stack_multiple(self):
+        """
+        Run multiple and nested processes to make sure the process stack is always correct
+        """
+        test_case = self
+
+        def test_nested(process):
+            test_case.assertIs(process, Process.current())
+
+        class StackTest(plumpy.Process):
+
+            def run(self):
+                test_case.assertIs(self, Process.current())
+                test_nested(self)
+
+        class ParentProcess(plumpy.Process):
+
+            def run(self):
+                test_case.assertIs(self, Process.current())
+                StackTest().execute()
+
+        to_run = []
+        for _ in range(100):
+            to_run.append(ParentProcess().step_until_terminated())
+
+        await asyncio.gather(*to_run)
+
+    def test_call_soon(self):
+
+        class CallSoon(plumpy.Process):
+
+            def run(self):
+                self.call_soon(self.do_except)
+
+            def do_except(self):
+                raise RuntimeError("Breaking yo!")
+
+        CallSoon().execute()
+        
+    def test_execute_twice(self):
+        """Test a process that is executed once finished raises a ClosedError"""
+        proc = test_utils.DummyProcess()
+        proc.execute()
+        with self.assertRaises(plumpy.ClosedError):
+            proc.execute()
