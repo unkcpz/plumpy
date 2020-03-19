@@ -335,3 +335,74 @@ class TestProcess(unittest.TestCase):
         # Check it's done
         self.assertTrue(proc.done())
         self.assertEqual(proc.state, ProcessState.FINISHED)
+
+    def test_kill_in_run(self):
+
+        class KillProcess(Process):
+            after_kill = False
+
+            def run(self, **kwargs):
+                self.kill()
+                # The following line should be executed because kill will not
+                # interrupt execution of a method call in the RUNNING state
+                self.after_kill = True
+
+        proc = KillProcess()
+        with self.assertRaises(plumpy.KilledError):
+            proc.execute()
+
+        self.assertTrue(proc.after_kill)
+        self.assertEqual(proc.state, ProcessState.KILLED)
+
+    def test_kill_when_paused_in_run(self):
+
+        class PauseProcess(Process):
+
+            def run(self, **kwargs):
+                self.pause()
+                self.kill()
+
+        proc = PauseProcess()
+        with self.assertRaises(plumpy.KilledError):
+            proc.execute()
+
+        self.assertEqual(proc.state, ProcessState.KILLED)
+
+    @pytest.mark.asyncio
+    async def test_kill_when_paused(self):
+        proc = test_utils.WaitForSignalProcess()
+
+        asyncio.ensure_future(proc.step_until_terminated())
+        await test_utils.run_until_waiting(proc)
+
+        saved_state = plumpy.Bundle(proc)
+
+        result = await proc.pause()
+        self.assertTrue(result)
+        self.assertTrue(proc.paused)
+
+        # Kill the process
+        proc.kill()
+
+        with self.assertRaises(plumpy.KilledError):
+            result = await proc.future()
+
+        self.assertEqual(proc.state, ProcessState.KILLED)
+
+    @pytest.mark.asyncio
+    async def test_run_multiple(self):
+        # Create and play some processes
+        loop = asyncio.get_event_loop()
+
+        procs = []
+        for proc_class in test_utils.TEST_PROCESSES:
+            proc = proc_class(loop=loop)
+            procs.append(proc)
+
+        futures = [proc.future() for proc in procs]
+
+        await asyncio.gather(*[p.step_until_terminated() for p in procs])
+        await asyncio.gather(*futures)
+
+        for future, proc_class in zip(futures, test_utils.TEST_PROCESSES):
+            self.assertDictEqual(proc_class.EXPECTED_OUTPUTS, future.result())
