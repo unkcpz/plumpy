@@ -29,7 +29,15 @@ class Future(asyncio.Future):
     """
     _cancelled = False
 
+    @property
+    def _done(self):
+        """hack way to compatible with persistence SavableFuture"""
+        return self.done()
+
     def result(self, timeout=None):
+        """
+        N.B timeout is removed from asyncio.result()
+        """
         if self._cancelled:
             raise CancelledError()
 
@@ -54,7 +62,7 @@ class Future(asyncio.Future):
         self._callbacks.remove(callback)
 
 
-class CancellableAction(Future):
+class CancellableAction(asyncio.Future):
     """
     An action that can be launched and potentially cancelled
     """
