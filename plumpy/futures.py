@@ -24,46 +24,22 @@ gather = lambda *args: gen.multi(args)  # pylint: disable=invalid-name
 
 class Future(asyncio.Future):
     """
-    Plumpy future.  This subclasses asyncio's futures to allow for cancellation.
+    Plumpy future.
 
+    asyncio's future already support cancelling.
     N.B cannot used concurrent.futures.Future since it is not awaitable
     """
-    _cancelled = False
 
     @property
     def _done(self):
         """hack way to compatible with persistence SavableFuture"""
         return self.done()
 
-    def result(self, timeout=None):
-        """
-        N.B timeout is removed from asyncio.result()
-        """
-        if self._cancelled:
-            raise CancelledError()
-
-        return super(Future, self).result()
-
-    def cancel(self):
-        """Cancel the future and schedule callbacks.
-        If the future is already done or cancelled, return False.  Otherwise,
-        change the future's state to cancelled, schedule the callbacks and
-        return True.
-        """
-        if self.done():
-            return False
-        self._cancelled = True
-        self._set_done()
-        return True
-
-    def cancelled(self):
-        return self._cancelled
-
     def remove_done_callback(self, callback):
         self._callbacks.remove(callback)
 
 
-class CancellableAction(asyncio.Future):
+class CancellableAction(Future):
     """
     An action that can be launched and potentially cancelled
     """

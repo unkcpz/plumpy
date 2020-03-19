@@ -12,6 +12,7 @@ import sys
 import threading
 import uuid
 
+from aiocontextvars import ContextVar
 from pika.exceptions import ConnectionClosed
 from tornado import concurrent, gen
 import tornado.stack_context
@@ -55,21 +56,7 @@ class BundleKeys(object):
     INPUTS_PARSED = 'INPUTS_PARSED'
     OUTPUTS = 'OUTPUTS'
 
-
-# Use thread-local storage for the stack
-_thread_local = threading.local()  # pylint: disable=invalid-name
-
-
-def _process_stack():
-    """Access the private live stack"""
-    global _thread_local  # pylint: disable=global-statement, invalid-name
-    # Lazily create the first time it's used
-    try:
-        return _thread_local.process_stack
-    except AttributeError:
-        _thread_local.process_stack = []
-        return _thread_local.process_stack
-
+_process_stack = ContextVar('process stack', default=[])
 
 class ProcessStateMachineMeta(abc.ABCMeta, state_machine.StateMachineMeta):
     pass
@@ -148,8 +135,8 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         :return: the currently running process
         :rtype: :class:`plumpy.Process`
         """
-        if _process_stack():
-            return _process_stack()[-1]
+        if _process_stack.get():
+            return _process_stack.get()[-1]
 
         return None
 
@@ -477,14 +464,14 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         meaning that globally someone can ask for Process.current() to get the last process
         that is on the call stack.
         """
-        _process_stack().append(self)
+        _process_stack.get().append(self)
         try:
             yield
         finally:
             assert Process.current() is self, \
                 "Somehow, the process at the top of the stack is not me, " \
                 "but another process! ({} != {})".format(self, Process.current())
-            _process_stack().pop()
+            _process_stack.get().pop()
 
     async def _run_task(self, callback, *args, **kwargs):
         """
@@ -498,8 +485,8 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         """
         # Make sure execute is a coroutine
         coro = utils.ensure_coroutine(callback)
-        result = await tornado.stack_context.run_with_stack_context(
-            tornado.stack_context.StackContext(self._process_scope), functools.partial(coro, *args, **kwargs))
+        with self._process_scope():
+            result = await coro(*args, **kwargs)
         return result
 
     # endregion
@@ -1070,7 +1057,6 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
     @ensure_not_closed
     async def step(self):
         assert not self.has_terminated(), "Cannot step, already terminated"
-        # print(self._state)
         # import pdb; pdb.set_trace()
 
         if self.paused:
