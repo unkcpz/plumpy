@@ -30,11 +30,6 @@ class Future(asyncio.Future):
     N.B cannot used concurrent.futures.Future since it is not awaitable
     """
 
-    @property
-    def _done(self):
-        """hack way to compatible with persistence SavableFuture"""
-        return self.done()
-
     def remove_done_callback(self, callback):
         self._callbacks.remove(callback)
 

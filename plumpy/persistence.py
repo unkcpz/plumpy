@@ -8,6 +8,7 @@ import inspect
 import os
 import yaml
 import pickle
+import asyncio
 
 from . import loaders
 from . import futures
@@ -466,7 +467,10 @@ class Savable(object):
         :rtype: :class:`Savable`
         """
         load_context = _ensure_object_loader(load_context, saved_state)
-        obj = cls.__new__(cls)
+        if issubclass(cls, asyncio.futures.Future):
+            obj = cls()
+        else:
+            obj = cls.__new__(cls)
         base.call_with_super_check(obj.load_instance_state, saved_state, load_context)
         return obj
 
@@ -520,7 +524,9 @@ class Savable(object):
 
     def load_members(self, members, saved_state, load_context=None):
         for member in members:
-            setattr(self, member, self._get_value(saved_state, member, load_context))
+            v = self._get_value(saved_state, member, load_context)
+            # setattr(self, member, self._get_value(saved_state, member, load_context))
+            setattr(self, member, v)
 
     def _ensure_persist_configured(self):
         if not self._persist_configured:
@@ -579,7 +585,7 @@ class Savable(object):
         return value
 
 
-@auto_persist('_done', '_result')
+@auto_persist('_state', '_result')
 class SavableFuture(futures.Future, Savable):
     """
     A savable future.
