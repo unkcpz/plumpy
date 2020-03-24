@@ -421,6 +421,10 @@ class Savable:
     _auto_persist = None
     _persist_configured = False
 
+    @classmethod
+    def create_obj(cls):
+        return cls.__new__(cls)
+
     @staticmethod
     def load(saved_state, load_context=None):
         """
@@ -464,10 +468,8 @@ class Savable:
         :rtype: :class:`Savable`
         """
         load_context = _ensure_object_loader(load_context, saved_state)
-        if issubclass(cls, asyncio.futures.Future):
-            obj = cls()
-        else:
-            obj = cls.__new__(cls)
+        # create object of a Savable class without specify attributes
+        obj = cls.create_obj()
         base.call_with_super_check(obj.load_instance_state, saved_state, load_context)
         return obj
 
@@ -591,6 +593,10 @@ class SavableFuture(futures.Future, Savable):
     """
     EXCEPTION = 'exception'
 
+    @classmethod
+    def create_obj(cls):
+        return cls()
+
     def save_instance_state(self, out_state, save_context):
         super().save_instance_state(out_state, save_context)
         if self.done() and self.exception() is not None:
@@ -601,11 +607,10 @@ class SavableFuture(futures.Future, Savable):
         super().load_instance_state(saved_state, load_context)
         try:
             exception = saved_state[self.EXCEPTION]
-            self._exc_info = (type(exception), exception, None)
+            self._exception = exception
         except KeyError:
-            self._exc_info = None
+            self._exception = None
 
         self._log_traceback = False  # Used for Python >= 3.4
-        self._tb_logger = None  # Used for Python <= 3.3
 
         self._callbacks = []
