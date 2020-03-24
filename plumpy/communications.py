@@ -6,6 +6,7 @@ import functools
 from tornado import concurrent, ioloop
 
 import kiwipy
+import asyncio
 
 from . import futures
 
@@ -55,7 +56,7 @@ def convert_to_comm(callback, loop=None):
     :param callback: the function to convert
     :return: a new callback function that returns a future
     """
-    loop = loop or ioloop.IOLoop.current()
+    loop = loop
 
     def converted(communicator, *args, **kwargs):
         msg_fn = functools.partial(callback, communicator, *args, **kwargs)
@@ -102,7 +103,7 @@ class LoopCommunicator(kiwipy.Communicator):
         assert communicator is not None
 
         self._communicator = communicator
-        self._loop = loop or ioloop.IOLoop.current()
+        self._loop = loop or asyncio.new_event_loop()
         self._subscribers = {}
 
     def loop(self):

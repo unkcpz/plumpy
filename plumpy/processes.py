@@ -11,11 +11,10 @@ import time
 import sys
 import threading
 import uuid
+import inspect
 
 from aiocontextvars import ContextVar
 from pika.exceptions import ConnectionClosed
-from tornado import concurrent, gen
-import tornado.stack_context
 import asyncio
 import yaml
 
@@ -835,17 +834,16 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         """
         kiwi_future = kiwipy.Future()
 
-        @gen.coroutine
-        def run_callback():
+        async def run_callback():
             with kiwipy.capture_exceptions(kiwi_future):
                 result = callback(*args, **kwargs)
-                while concurrent.is_future(result):
-                    result = yield result
+                while inspect.isawaitable(result):
+                    result = await result
 
                 kiwi_future.set_result(result)
 
         # Schedule the task and give back a kiwi future
-        self.loop().add_callback(run_callback)
+        self.loop().create_task(run_callback())
         return kiwi_future
 
     # endregion

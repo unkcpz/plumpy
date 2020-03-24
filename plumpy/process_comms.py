@@ -141,18 +141,16 @@ class RemoteProcessController(object):  # pylint: disable=useless-object-inherit
     def __init__(self, communicator):
         self._communicator = communicator
 
-    @gen.coroutine
-    def get_status(self, pid):
+    async def get_status(self, pid):
         """
         Get the status of a process with the given PID
         :param pid: the process id
         :return: the status response from the process
         """
-        result = yield self._communicator.rpc_send(pid, STATUS_MSG)
-        raise gen.Return(result)
+        result = await self._communicator.rpc_send(pid, STATUS_MSG)
+        return result
 
-    @gen.coroutine
-    def pause_process(self, pid, msg=None):
+    async def pause_process(self, pid, msg=None):
         """
         Pause the process
 
@@ -164,24 +162,22 @@ class RemoteProcessController(object):  # pylint: disable=useless-object-inherit
         if msg is not None:
             message[MESSAGE_KEY] = msg
 
-        pause_future = yield self._communicator.rpc_send(pid, message)
-        result = yield pause_future
-        raise gen.Return(result)
+        pause_future = await self._communicator.rpc_send(pid, message)
+        result = await pause_future
+        return result
 
-    @gen.coroutine
-    def play_process(self, pid):
+    async def play_process(self, pid):
         """
         Play the process
 
         :param pid: the pid of the process to play
         :return: True if played, False otherwise
         """
-        play_future = yield self._communicator.rpc_send(pid, PLAY_MSG)
-        result = yield play_future
-        raise gen.Return(result)
+        play_future = await self._communicator.rpc_send(pid, PLAY_MSG)
+        result = await play_future
+        return result
 
-    @gen.coroutine
-    def kill_process(self, pid, msg=None):
+    async def kill_process(self, pid, msg=None):
         """
         Kill the process
 
@@ -194,14 +190,13 @@ class RemoteProcessController(object):  # pylint: disable=useless-object-inherit
             message[MESSAGE_KEY] = msg
 
         # Wait for the communication to go through
-        kill_future = yield self._communicator.rpc_send(pid, message)
+        kill_future = await self._communicator.rpc_send(pid, message)
         # Now wait for the kill to be enacted
-        result = yield kill_future
+        result = await kill_future
 
-        raise gen.Return(result)
+        return result
 
-    @gen.coroutine
-    def continue_process(self, pid, tag=None, nowait=False, no_reply=False):
+    async def continue_process(self, pid, tag=None, nowait=False, no_reply=False):
         """
         Continue the process
 
@@ -211,17 +206,16 @@ class RemoteProcessController(object):  # pylint: disable=useless-object-inherit
         """
         message = create_continue_body(pid=pid, tag=tag, nowait=nowait)
         # Wait for the communication to go through
-        continue_future = yield self._communicator.task_send(message, no_reply=no_reply)
+        continue_future = await self._communicator.task_send(message, no_reply=no_reply)
 
         if no_reply:
             return
 
         # Now wait for the result of the task
-        result = yield continue_future
-        raise gen.Return(result)
+        result = await continue_future
+        return result
 
-    @gen.coroutine
-    def launch_process(self,
+    async def launch_process(self,
                        process_class,
                        init_args=None,
                        init_kwargs=None,
@@ -243,16 +237,15 @@ class RemoteProcessController(object):  # pylint: disable=useless-object-inherit
         """
         # pylint: disable=too-many-arguments
         message = create_launch_body(process_class, init_args, init_kwargs, persist, loader, nowait)
-        launch_future = yield self._communicator.task_send(message, no_reply=no_reply)
+        launch_future = await self._communicator.task_send(message, no_reply=no_reply)
 
         if no_reply:
             return
 
-        result = yield launch_future
-        raise gen.Return(result)
+        result = await launch_future
+        return result
 
-    @gen.coroutine
-    def execute_process(self,
+    async def execute_process(self,
                         process_class,
                         init_args=None,
                         init_kwargs=None,
@@ -275,17 +268,17 @@ class RemoteProcessController(object):  # pylint: disable=useless-object-inherit
         # pylint: disable=too-many-arguments
         message = create_create_body(process_class, init_args, init_kwargs, persist=True, loader=loader)
 
-        create_future = yield self._communicator.task_send(message)
-        pid = yield create_future
+        create_future = await self._communicator.task_send(message)
+        pid = await create_future
 
         message = create_continue_body(pid, nowait=nowait)
-        continue_future = yield self._communicator.task_send(message, no_reply=no_reply)
+        continue_future = await self._communicator.task_send(message, no_reply=no_reply)
 
         if no_reply:
             return
 
-        result = yield continue_future
-        raise gen.Return(result)
+        result = await continue_future
+        return result
 
 
 class RemoteProcessThreadController(object):  # pylint: disable=useless-object-inheritance
@@ -521,7 +514,7 @@ class ProcessLauncher(object):  # pylint: disable=useless-object-inheritance
             self._persister.save_checkpoint(proc)
 
         if nowait:
-            self._loop.add_callback(proc.step_until_terminated)
+            asyncio.ensure_future(proc.step_until_terminated())
             return proc.pid
 
         await proc.step_until_terminated()
@@ -545,7 +538,7 @@ class ProcessLauncher(object):  # pylint: disable=useless-object-inheritance
         proc = saved_state.unbundle(self._load_context)
 
         if nowait:
-            self._loop.add_callback(proc.step_until_terminated)
+            asyncio.ensure_future(proc.step_until_terminated())
             return proc.pid
 
         await proc.step_until_terminated()

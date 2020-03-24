@@ -75,16 +75,15 @@ def create_task(coro, loop=None):
     :return: the future representing the outcome of the coroutine
     :rtype: :class:`concurrent.futures.Future`
     """
-    loop = loop or ioloop.IOLoop.current()
+    loop = loop
 
-    future = concurrent.futures.Future()
+    future = asyncio.Future()
 
-    @gen.coroutine
-    def run_task():
+    async def run_task():
         with kiwipy.capture_exceptions(future):
-            future.set_result((yield coro()))
+            future.set_result(await coro())
 
-    loop.add_callback(run_task)
+    asyncio.ensure_future(run_task())
     return future
 
 
