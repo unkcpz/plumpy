@@ -5,6 +5,7 @@ import copy
 import logging
 
 from tornado import gen
+import asyncio
 import kiwipy
 
 from . import loaders
@@ -473,24 +474,22 @@ class ProcessLauncher:
         else:
             self._loader = loaders.get_object_loader()
 
-    @gen.coroutine
-    def __call__(self, communicator, task):
+    async def __call__(self, communicator, task):
         """
         Receive a task.
         :param task: The task message
         """
         task_type = task[TASK_KEY]
         if task_type == LAUNCH_TASK:
-            raise gen.Return((yield self._launch(communicator, **task.get(TASK_ARGS, {}))))
+            return await self._launch(communicator, **task.get(TASK_ARGS, {}))
         if task_type == CONTINUE_TASK:
-            raise gen.Return((yield self._continue(communicator, **task.get(TASK_ARGS, {}))))
+            return await self._continue(communicator, **task.get(TASK_ARGS, {}))
         if task_type == CREATE_TASK:
-            raise gen.Return((yield self._create(communicator, **task.get(TASK_ARGS, {}))))
+            return await self._create(communicator, **task.get(TASK_ARGS, {}))
 
         raise communications.TaskRejected
 
-    @gen.coroutine
-    def _launch(self, _communicator, process_class, persist, nowait, init_args=None, init_kwargs=None):
+    async def _launch(self, _communicator, process_class, persist, nowait, init_args=None, init_kwargs=None):
         """
         Launch the process
 
@@ -517,13 +516,12 @@ class ProcessLauncher:
 
         if nowait:
             self._loop.add_callback(proc.step_until_terminated)
-            raise gen.Return(proc.pid)
+            return proc.pid
 
-        yield proc.step_until_terminated()
-        raise gen.Return(proc.future().result())
+        await proc.step_until_terminated()
+        return proc.future().result()
 
-    @gen.coroutine
-    def _continue(self, _communicator, pid, nowait, tag=None):
+    async def _continue(self, _communicator, pid, nowait, tag=None):
         """
         Continue the process
 
@@ -542,13 +540,12 @@ class ProcessLauncher:
 
         if nowait:
             self._loop.add_callback(proc.step_until_terminated)
-            raise gen.Return(proc.pid)
+            return proc.pid
 
-        yield proc.step_until_terminated()
-        raise gen.Return(proc.future().result())
+        await proc.step_until_terminated()
+        return proc.future().result()
 
-    @gen.coroutine
-    def _create(self, _communicator, process_class, persist, init_args=None, init_kwargs=None):
+    async def _create(self, _communicator, process_class, persist, init_args=None, init_kwargs=None):
         """
         Create the process
 
@@ -572,4 +569,4 @@ class ProcessLauncher:
         if persist:
             self._persister.save_checkpoint(proc)
 
-        raise gen.Return(proc.pid)
+        return proc.pid
