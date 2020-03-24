@@ -242,7 +242,8 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         # Don't allow the spec to be changed anymore
         self.spec().seal()
 
-        self._loop = loop if loop is not None else events.get_event_loop()
+        # self._loop = loop if loop is not None else events.get_event_loop()
+        self._loop = loop if loop is not None else asyncio.get_event_loop()
 
         self._setup_event_hooks()
 
@@ -367,7 +368,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
     def launch(self, process_class, inputs=None, pid=None, logger=None):
         process = process_class(
             inputs=inputs, pid=pid, logger=logger, loop=self.loop(), communicator=self._communicator)
-        self.loop().add_callback(process.step_until_terminated)
+        asyncio.ensure_future(process.step_until_terminated())
         return process
 
     # region State introspection methods
@@ -450,7 +451,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         """
         args = (callback,) + args
         handle = events.ProcessCallback(self, self._run_task, args, kwargs)
-        self._loop.add_callback(handle.run)
+        asyncio.ensure_future(handle.run())
         return handle
 
     def callback_excepted(self, _callback, exception, trace):
@@ -1050,7 +1051,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         :return: None if not terminated, otherwise `self.outputs`
         """
         if not self.has_terminated():
-            self.loop().run_sync(self.step_until_terminated)
+            self.loop().run_until_complete(self.step_until_terminated())
 
         return self.future().result()
 
