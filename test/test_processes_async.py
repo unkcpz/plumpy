@@ -590,3 +590,102 @@ class TestProcessSaving(unittest.TestCase):
         self.assertEqual(0, len(proc_unbundled.steps_ran))
         await proc_unbundled.step_until_terminated()
         self.assertEqual([SavePauseProc.step2.__name__], proc_unbundled.steps_ran)
+
+    def test_created_bundle(self):
+        """
+        Check that the bundle after just creating a process is as we expect
+        """
+        self._check_round_trip(test_utils.DummyProcess())
+
+    def test_instance_state_with_outputs(self):
+        proc = test_utils.DummyProcessWithOutput()
+
+        saver = test_utils.ProcessSaver(proc)
+        proc.execute()
+
+        self._check_round_trip(proc)
+
+        for bundle, outputs in zip(saver.snapshots, saver.outputs):
+            # Check that it is a copy
+            self.assertIsNot(outputs, bundle.get(BundleKeys.OUTPUTS, {}))
+            # Check the contents are the same
+            self.assertDictEqual(outputs, bundle.get(BundleKeys.OUTPUTS, {}))
+
+        self.assertIsNot(proc.outputs, saver.snapshots[-1].get(BundleKeys.OUTPUTS, {}))
+
+    def test_saving_each_step(self):
+        ioloop = asyncio.get_event_loop()
+        for proc_class in test_utils.TEST_PROCESSES:
+            proc = proc_class()
+            saver = test_utils.ProcessSaver(proc)
+            saver.capture()
+            self.assertEqual(proc.state, ProcessState.FINISHED)
+            self.assertTrue(test_utils.check_process_against_snapshots(ioloop, proc_class, saver.snapshots))
+
+    @pytest.mark.asyncio
+    async def test_restart(self):
+        proc = _RestartProcess()
+        asyncio.ensure_future(proc.step_until_terminated())
+
+        await test_utils.run_until_waiting(proc)
+
+        # Save the state of the process
+        saved_state = plumpy.Bundle(proc)
+
+        # Load a process from the saved state
+        loaded_proc = saved_state.unbundle()
+        self.assertEqual(loaded_proc.state, ProcessState.WAITING)
+
+        # Now resume it
+        loaded_proc.resume()
+        await loaded_proc.step_until_terminated()
+        self.assertEqual(loaded_proc.outputs, {'finished': True})
+
+    @pytest.mark.asyncio
+    async def test_wait_save_continue(self):
+        """ Test that process saved while in WAITING state restarts correctly when loaded """
+        proc = test_utils.WaitForSignalProcess()
+        asyncio.ensure_future(proc.step_until_terminated())
+
+        await test_utils.run_until_waiting(proc)
+
+        saved_state = plumpy.Bundle(proc)
+
+        # Run the process to the end
+        proc.resume()
+        result1 = await proc.future()
+
+        # Load from saved state and run again
+        loader = plumpy.get_object_loader()
+        proc2 = saved_state.unbundle(plumpy.LoadSaveContext(loader))
+        asyncio.ensure_future(proc2.step_until_terminated())
+        proc2.resume()
+        result2 = await proc2.future()
+
+        # Check results match
+        self.assertEqual(result1, result2)
+
+    def test_killed(self):
+        proc = test_utils.DummyProcess()
+        proc.kill()
+        self.assertEqual(proc.state, plumpy.ProcessState.KILLED)
+        self._check_round_trip(proc)
+
+    def _check_round_trip(self, proc1):
+        bundle1 = plumpy.Bundle(proc1)
+
+        proc2 = bundle1.unbundle()
+        bundle2 = plumpy.Bundle(proc2)
+
+        self.assertEqual(proc1.pid, proc2.pid)
+        self.assertDictEqual(bundle1, bundle2)
+
+class _RestartProcess(test_utils.WaitForSignalProcess):
+
+    @classmethod
+    def define(cls, spec):
+        super(_RestartProcess, cls).define(spec)
+        spec.outputs.dynamic = True
+
+    def last_step(self):
+        self.out("finished", True)
