@@ -2,10 +2,12 @@
 """
 Module containing future related methods and classes
 """
-
 import kiwipy
 import asyncio
 from tornado import gen, ioloop
+import inspect
+import plumpy
+import concurrent
 
 __all__ = ['Future', 'gather', 'chain', 'copy_future', 'CancelledError', 'create_task']
 
@@ -21,16 +23,11 @@ chain = kiwipy.chain  # pylint: disable=invalid-name
 gather = lambda *args: gen.multi(args)  # pylint: disable=invalid-name
 
 
-class Future(asyncio.Future):
-    """
-    Plumpy future.
+class Future(concurrent.futures.Future):
+    """Just a concurrent Future that can be awaited in an event loop"""
 
-    asyncio's future already support cancelling.
-    N.B cannot used concurrent.futures.Future since it is not awaitable
-    """
-
-    def remove_done_callback(self, callback):
-        self._callbacks.remove(callback)
+    def __await__(self):
+        return asyncio.wrap_future(self).__await__()
 
 
 class CancellableAction(Future):
@@ -74,15 +71,21 @@ def create_task(coro, loop=None):
     :return: the future representing the outcome of the coroutine
     :rtype: :class:`concurrent.futures.Future`
     """
-    loop = loop
-
-    future = asyncio.Future()
+    future = plumpy.Future()
 
     async def run_task():
+        print("inside run_task")
+        print((id(asyncio.get_event_loop())))
         with kiwipy.capture_exceptions(future):
-            future.set_result(await coro())
+            res = coro()
+            if inspect.isawaitable(res):
+                future.set_result(await res)
+            else:
+                future.set_result(res)
 
-    asyncio.ensure_future(run_task())
+    # function create_task is called in kiwipy's thread
+    # but we want it awaited in event loop of plumpy's LoopCommunicator
+    asyncio.run_coroutine_threadsafe(run_task(), loop)
     return future
 
 

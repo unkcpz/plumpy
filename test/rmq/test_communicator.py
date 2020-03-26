@@ -15,11 +15,7 @@ import plumpy
 from plumpy import communications, process_comms
 from test import test_utils
 from test.utils import AsyncTestCase
-
-try:
-    import pika
-except ImportError:
-    pika = None
+from six.moves import range
 
 AWAIT_TIMEOUT = testing.get_async_test_timeout()
 
@@ -41,7 +37,8 @@ class CommunicatorTestCase(unittest.TestCase):
             task_queue=queue_name,
             testing_mode=True
         )
-        self.communicator = communications.LoopCommunicator(self.rmq_communicator)
+        self.loop = asyncio.get_event_loop()
+        self.communicator = communications.LoopCommunicator(self.rmq_communicator, loop=self.loop, testing_mode=True)
 
     def tearDown(self):
         # Close the connector before calling super because it will close the loop
@@ -51,7 +48,14 @@ class CommunicatorTestCase(unittest.TestCase):
 
 class TestLoopCommunicator(CommunicatorTestCase):
     """Make sure the loop communicator is working as expected"""
-    WAIT_TIMEOUT = 5.
+
+    def setUp(self):
+        super(TestLoopCommunicator, self).setUp()
+
+    def tearDown(self):
+        # Close the connector before calling super because it will close the loop
+        self.rmq_communicator.stop()
+        super(TestLoopCommunicator, self).tearDown()
 
     @pytest.mark.asyncio
     async def test_broadcast(self):
@@ -59,7 +63,7 @@ class TestLoopCommunicator(CommunicatorTestCase):
         broadcast_future = plumpy.Future()
 
         def get_broadcast(_comm, body, sender, subject, correlation_id):
-            # self.assertEqual(self.loop, ioloop.IOLoop.current())
+            self.assertEqual(self.loop, asyncio.get_event_loop())
             broadcast_future.set_result({
                 'body': body,
                 'sender': sender,
@@ -79,7 +83,7 @@ class TestLoopCommunicator(CommunicatorTestCase):
         rpc_future = plumpy.Future()
 
         def get_rpc(_comm, msg):
-            # self.assertEqual(self.loop, ioloop.IOLoop.current())
+            self.assertEqual(self.loop, asyncio.get_event_loop())
             rpc_future.set_result(msg)
 
         self.communicator.add_rpc_subscriber(get_rpc, 'rpc')
@@ -94,7 +98,7 @@ class TestLoopCommunicator(CommunicatorTestCase):
         task_future = plumpy.Future()
 
         def get_task(_comm, msg):
-            # self.assertEqual(self.loop, ioloop.IOLoop.current())
+            self.assertEqual(self.loop, asyncio.get_event_loop())
             task_future.set_result(msg)
 
         self.communicator.add_task_subscriber(get_task)
@@ -104,24 +108,13 @@ class TestLoopCommunicator(CommunicatorTestCase):
         self.assertEqual(TASK, result)
 
 
-class TestTaskActions(unittest.TestCase):
+class TestTaskActions(CommunicatorTestCase):
 
     def setUp(self):
         super().setUp()
         self._tmppath = tempfile.mkdtemp()
         self.persister = plumpy.PicklePersister(self._tmppath)
 
-        message_exchange = "{}.{}".format(self.__class__.__name__, shortuuid.uuid())
-        task_exchange = "{}.{}".format(self.__class__.__name__, shortuuid.uuid())
-        queue_name = "{}.{}.tasks".format(self.__class__.__name__, shortuuid.uuid())
-
-        self.rmq_communicator = rmq.connect(
-            connection_params={'url': 'amqp://guest:guest@localhost:5672/'},
-            message_exchange=message_exchange,
-            task_exchange=task_exchange,
-            task_queue=queue_name,
-            testing_mode=True)
-        self.communicator = communications.LoopCommunicator(self.rmq_communicator)
         # Add the process launcher
         self.communicator.add_task_subscriber(plumpy.ProcessLauncher(persister=self.persister))
         self.process_controller = process_comms.RemoteProcessController(self.communicator)
