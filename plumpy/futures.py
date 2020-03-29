@@ -6,7 +6,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 import kiwipy
 import asyncio
-from tornado import gen, ioloop
 import inspect
 import plumpy
 import concurrent
@@ -55,7 +54,7 @@ class CancellableAction(Future):
         :param kwargs: the keyword arguments to the action
         """
         if self.done():
-            raise InvalidStateError("Action has already been ran")
+            raise InvalidStateError('Action has already been ran')
 
         try:
             with kiwipy.capture_exceptions(self):
@@ -76,12 +75,12 @@ def create_task(coro, loop=None):
     """
     future = plumpy.Future()
 
-    print("create_task")
+    print('create_task')
     print((id(asyncio.get_event_loop())))
     print((id(loop)))
 
     async def run_task():
-        print("inside run_task")
+        print('inside run_task')
         print((id(asyncio.get_event_loop())))
         with kiwipy.capture_exceptions(future):
             res = coro()

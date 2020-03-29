@@ -2,9 +2,9 @@
 from __future__ import absolute_import
 from setuptools import setup
 
-__author__ = "Martin Uhrin"
-__license__ = "GPLv3 and MIT, see LICENSE file"
-__contributors__ = "Sebastiaan Huber, Leopold Talirz, Dominik Gresch"
+__author__ = 'Martin Uhrin'
+__license__ = 'GPLv3 and MIT, see LICENSE file'
+__contributors__ = 'Sebastiaan Huber, Leopold Talirz, Dominik Gresch'
 
 about = {}
 with open('plumpy/version.py') as f:
@@ -31,10 +31,11 @@ setup(name='plumpy',
       keywords='workflow multithreaded rabbitmq',
       install_requires=[
           'frozendict',
-          'tornado>=4.1, <5.0',
           'pyyaml~=5.1.2',
           'pika>=1.0.0',
           'kiwipy[rmq]>=0.5.2',
+          'aio-pika',
+          'aiocontextvars',
           'enum34; python_version<"3.4"',
           'backports.tempfile; python_version<"3.2"',
       ],
@@ -52,11 +53,11 @@ setup(name='plumpy',
               'pylint<2; python_version<"3"',
               'pylint<=2.3.1; python_version>="3"',
           ],
-          "docs": [
-              "Sphinx==1.8.4",
-              "Pygments==2.3.1",
-              "docutils==0.14",
-              "sphinx-rtd-theme==0.4.3",
+          'docs': [
+              'Sphinx==1.8.4',
+              'Pygments==2.3.1',
+              'docutils==0.14',
+              'sphinx-rtd-theme==0.4.3',
           ],
       },
       packages=['plumpy', 'plumpy/base'],

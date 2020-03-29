@@ -445,7 +445,7 @@ class Savable(object):
             class_name = Savable._get_class_name(saved_state)
             load_cls = load_context.loader.load_object(class_name)
         except KeyError:
-            raise ValueError("Class name not found in saved state")
+            raise ValueError('Class name not found in saved state')
         else:
             return load_cls.recreate_from(saved_state, load_context)
 
@@ -514,7 +514,7 @@ class Savable(object):
             value = getattr(self, member)
             if inspect.ismethod(value):
                 if value.__self__ is not self:
-                    raise TypeError("Cannot persist methods of other classes")
+                    raise TypeError('Cannot persist methods of other classes')
                 Savable._set_meta_type(out_state, member, META__TYPE__METHOD)
                 value = value.__name__
             elif isinstance(value, Savable):

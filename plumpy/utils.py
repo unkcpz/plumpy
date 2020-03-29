@@ -6,7 +6,6 @@ import importlib
 import inspect
 import logging
 import threading
-import tornado.gen
 import asyncio
 
 import frozendict
@@ -26,13 +25,13 @@ _default_loop = None
 class EventHelper(object):
 
     def __init__(self, listener_type):
-        assert listener_type is not None, "Must provide valid listener type"
+        assert listener_type is not None, 'Must provide valid listener type'
 
         self._listener_type = listener_type
         self._listeners = set()
 
     def add_listener(self, listener):
-        assert isinstance(listener, self._listener_type), "Listener is not of right type"
+        assert isinstance(listener, self._listener_type), 'Listener is not of right type'
         self._listeners.add(listener)
 
     def remove_listener(self, listener):
@@ -47,7 +46,7 @@ class EventHelper(object):
 
     def fire_event(self, event_function, *args, **kwargs):
         if event_function is None:
-            raise ValueError("Must provide valid event method")
+            raise ValueError('Must provide valid event method')
 
         # Make a copy of the list for iteration just in case it changes in a callback
         for listener in list(self.listeners):
@@ -120,7 +119,7 @@ class AttributesFrozendict(frozendict.frozendict):
         # This attribute is looked for by pickle when deserialising.  At this point
         # the object is not yet constructed and so accessing any members is
         # dangerous and often causes infinite recursion so I have to guard like this.
-        if attr == "__setstate__":
+        if attr == '__setstate__':
             raise AttributeError()
         try:
             return self[attr]
@@ -146,8 +145,8 @@ class SimpleNamespace(object):
 
     def __repr__(self):
         keys = sorted(self.__dict__)
-        items = ("{}={!r}".format(k, self.__dict__[k]) for k in keys)
-        return "{}({})".format(type(self).__name__, ", ".join(items))
+        items = ('{}={!r}'.format(k, self.__dict__[k]) for k in keys)
+        return '{}({})'.format(type(self).__name__, ', '.join(items))
 
     def __eq__(self, other):
         return self.__dict__ == other.__dict__
@@ -245,6 +244,7 @@ def ensure_coroutine(fn):
     if asyncio.iscoroutinefunction(fn):
         return fn
     else:
+
         async def wrapper(*args, **kwargs):
             return fn(*args, **kwargs)
 

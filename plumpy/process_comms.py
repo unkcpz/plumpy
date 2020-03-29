@@ -1,11 +1,7 @@
 """Module for process level communication functions and classes"""
-
-from __future__ import absolute_import
-from __future__ import print_function
 import copy
 import logging
 
-from tornado import gen
 import asyncio
 import kiwipy
 
@@ -216,13 +212,13 @@ class RemoteProcessController(object):  # pylint: disable=useless-object-inherit
         return result
 
     async def launch_process(self,
-                       process_class,
-                       init_args=None,
-                       init_kwargs=None,
-                       persist=False,
-                       loader=None,
-                       nowait=False,
-                       no_reply=False):
+                             process_class,
+                             init_args=None,
+                             init_kwargs=None,
+                             persist=False,
+                             loader=None,
+                             nowait=False,
+                             no_reply=False):
         """
         Launch a process given the class and constructor arguments
 
@@ -246,12 +242,12 @@ class RemoteProcessController(object):  # pylint: disable=useless-object-inherit
         return result
 
     async def execute_process(self,
-                        process_class,
-                        init_args=None,
-                        init_kwargs=None,
-                        loader=None,
-                        nowait=False,
-                        no_reply=False):
+                              process_class,
+                              init_args=None,
+                              init_kwargs=None,
+                              loader=None,
+                              nowait=False,
+                              no_reply=False):
         """
         Execute a process.  This call will first send a create task and then a continue task over
         the communicator.  This means that if communicator messages are durable then the process
@@ -501,7 +497,7 @@ class ProcessLauncher(object):  # pylint: disable=useless-object-inheritance
         :return: the pid of the created process or the outputs (if nowait=False)
         """
         if persist and not self._persister:
-            raise communications.TaskRejected("Cannot persist process, no persister")
+            raise communications.TaskRejected('Cannot persist process, no persister')
 
         if init_args is None:
             init_args = ()
@@ -531,7 +527,7 @@ class ProcessLauncher(object):  # pylint: disable=useless-object-inheritance
         """
         if not self._persister:
             LOGGER.warning('rejecting task: cannot continue process<%d> because no persister is available', pid)
-            raise communications.TaskRejected("Cannot continue process, no persister")
+            raise communications.TaskRejected('Cannot continue process, no persister')
 
         # Do not catch exceptions here, because if these operations fail, the continue task should except and bubble up
         saved_state = self._persister.load_checkpoint(pid, tag)
@@ -556,7 +552,7 @@ class ProcessLauncher(object):  # pylint: disable=useless-object-inheritance
         :return: the pid of the created process
         """
         if persist and not self._persister:
-            raise communications.TaskRejected("Cannot persist process, no persister")
+            raise communications.TaskRejected('Cannot persist process, no persister')
 
         if init_args is None:
             init_args = ()

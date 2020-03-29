@@ -1,21 +1,20 @@
-from __future__ import absolute_import
+import unittest
 
 import types
-from .utils import TestCase
 
 from plumpy.ports import Port, InputPort, OutputPort, PortNamespace, UNSPECIFIED
 
 
-class TestPort(TestCase):
+class TestPort(unittest.TestCase):
 
     def test_required(self):
-        spec = Port("required_value", required=True)
+        spec = Port('required_value', required=True)
 
         self.assertIsNotNone(spec.validate(UNSPECIFIED))
         self.assertIsNone(spec.validate(5))
 
     def test_validate(self):
-        spec = Port("required_value", valid_type=int)
+        spec = Port('required_value', valid_type=int)
 
         self.assertIsNone(spec.validate(5))
         self.assertIsNotNone(spec.validate('a'))
@@ -25,16 +24,16 @@ class TestPort(TestCase):
         def validate(value, port):
             assert isinstance(port, Port)
             if not isinstance(value, int):
-                return "Not int"
+                return 'Not int'
             return None
 
-        spec = Port("valid_with_validator", validator=validate)
+        spec = Port('valid_with_validator', validator=validate)
 
         self.assertIsNone(spec.validate(5))
         self.assertIsNotNone(spec.validate('s'))
 
 
-class TestInputPort(TestCase):
+class TestInputPort(unittest.TestCase):
 
     def test_default(self):
         """Test the default value property for the InputPort."""
@@ -75,7 +74,7 @@ class TestInputPort(TestCase):
         self.assertIsNone(port.validate(some_lambda))
 
 
-class TestOutputPort(TestCase):
+class TestOutputPort(unittest.TestCase):
 
     def test_default(self):
         """
@@ -97,7 +96,7 @@ class TestOutputPort(TestCase):
         self.assertEqual(port.validator, validator)
 
 
-class TestPortNamespace(TestCase):
+class TestPortNamespace(unittest.TestCase):
 
     BASE_PORT_NAME = 'port'
     BASE_PORT_NAMESPACE_NAME = 'port'
@@ -312,7 +311,9 @@ class TestPortNamespace(TestCase):
     def test_port_namespace_lambda_defaults(self):
         """Verify that lambda defaults are accepted and properly evaluated."""
         port_namespace = PortNamespace('base')
-        port_namespace['lambda_default'] = InputPort('lambda_default', default=lambda: 1, valid_type=(types.FunctionType, int))
+        port_namespace['lambda_default'] = InputPort('lambda_default',
+                                                     default=lambda: 1,
+                                                     valid_type=(types.FunctionType, int))
 
         inputs = port_namespace.pre_process({})
         self.assertEqual(inputs['lambda_default'], 1)

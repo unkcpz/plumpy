@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 from functools import partial
 import shutil
 import tempfile
@@ -9,15 +8,11 @@ import pytest
 import asyncio
 
 from kiwipy import rmq
-from tornado import testing, ioloop
 
 import plumpy
 from plumpy import communications, process_comms
-from test import test_utils
-from test.utils import AsyncTestCase
-from six.moves import range
+from test import utils
 
-AWAIT_TIMEOUT = testing.get_async_test_timeout()
 
 # pylint: disable=missing-docstring
 
@@ -26,9 +21,9 @@ class CommunicatorTestCase(unittest.TestCase):
 
     def setUp(self):
         super(CommunicatorTestCase, self).setUp()
-        message_exchange = "{}.{}".format(self.__class__.__name__, shortuuid.uuid())
-        task_exchange = "{}.{}".format(self.__class__.__name__, shortuuid.uuid())
-        queue_name = "{}.{}.tasks".format(self.__class__.__name__, shortuuid.uuid())
+        message_exchange = '{}.{}'.format(self.__class__.__name__, shortuuid.uuid())
+        task_exchange = '{}.{}'.format(self.__class__.__name__, shortuuid.uuid())
+        queue_name = '{}.{}.tasks'.format(self.__class__.__name__, shortuuid.uuid())
 
         self.rmq_communicator = rmq.connect(connection_params={'url': 'amqp://guest:guest@localhost:5672/'},
                                             message_exchange=message_exchange,
@@ -125,26 +120,26 @@ class TestTaskActions(CommunicatorTestCase):
     @pytest.mark.asyncio
     async def test_launch(self):
         # Let the process run to the end
-        result = await self.process_controller.launch_process(test_utils.DummyProcess)
+        result = await self.process_controller.launch_process(utils.DummyProcess)
         # Check that we got a result
-        self.assertDictEqual(test_utils.DummyProcess.EXPECTED_OUTPUTS, result)
+        self.assertDictEqual(utils.DummyProcess.EXPECTED_OUTPUTS, result)
 
     @pytest.mark.asyncio
     async def test_launch_nowait(self):
         """ Testing launching but don't wait, just get the pid """
-        pid = await self.process_controller.launch_process(test_utils.DummyProcess, nowait=True)
+        pid = await self.process_controller.launch_process(utils.DummyProcess, nowait=True)
         self.assertIsInstance(pid, uuid.UUID)
 
     @pytest.mark.asyncio
     async def test_execute_action(self):
         """ Test the process execute action """
-        result = await self.process_controller.execute_process(test_utils.DummyProcessWithOutput)
-        self.assertEqual(test_utils.DummyProcessWithOutput.EXPECTED_OUTPUTS, result)
+        result = await self.process_controller.execute_process(utils.DummyProcessWithOutput)
+        self.assertEqual(utils.DummyProcessWithOutput.EXPECTED_OUTPUTS, result)
 
     @pytest.mark.asyncio
     async def test_execute_action_nowait(self):
         """ Test the process execute action """
-        pid = await self.process_controller.execute_process(test_utils.DummyProcessWithOutput, nowait=True)
+        pid = await self.process_controller.execute_process(utils.DummyProcessWithOutput, nowait=True)
         self.assertIsInstance(pid, uuid.UUID)
 
     @pytest.mark.asyncio
@@ -154,7 +149,7 @@ class TestTaskActions(CommunicatorTestCase):
 
         launch_futures = []
         for _ in range(num_to_launch):
-            launch = self.process_controller.launch_process(test_utils.DummyProcess, nowait=True)
+            launch = self.process_controller.launch_process(utils.DummyProcess, nowait=True)
             launch_futures.append(launch)
 
         results = await asyncio.gather(*launch_futures)
@@ -164,11 +159,11 @@ class TestTaskActions(CommunicatorTestCase):
     @pytest.mark.asyncio
     async def test_continue(self):
         """ Test continuing a saved process """
-        process = test_utils.DummyProcessWithOutput()
+        process = utils.DummyProcessWithOutput()
         self.persister.save_checkpoint(process)
         pid = process.pid
         del process
 
         # Let the process run to the end
         result = await self.process_controller.continue_process(pid)
-        self.assertEqual(result, test_utils.DummyProcessWithOutput.EXPECTED_OUTPUTS)
+        self.assertEqual(result, utils.DummyProcessWithOutput.EXPECTED_OUTPUTS)

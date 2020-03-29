@@ -1,14 +1,14 @@
-from __future__ import absolute_import
+import unittest
+
 from plumpy.ports import PortNamespace, InputPort
 from plumpy import ProcessSpec
-from .utils import TestCase
 
 
 class StrSubtype(str):
     pass
 
 
-class TestProcessSpec(TestCase):
+class TestProcessSpec(unittest.TestCase):
 
     def setUp(self):
         self.spec = ProcessSpec()

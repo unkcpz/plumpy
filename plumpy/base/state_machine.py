@@ -60,10 +60,10 @@ class TransitionFailed(Exception):
         super(TransitionFailed, self).__init__(self._format_msg())
 
     def _format_msg(self):
-        msg = ["{} -> {}".format(self.initial_state, self.final_state)]
+        msg = ['{} -> {}'.format(self.initial_state, self.final_state)]
         if self.traceback_str is not None:
             msg.append(self.traceback_str)
-        return "\n".join(msg)
+        return '\n'.join(msg)
 
 
 def event(from_states='*', to_states='*'):
@@ -86,17 +86,17 @@ def event(from_states='*', to_states='*'):
             initial = self._state
 
             if from_states != '*' and not any(isinstance(self._state, state) for state in from_states):
-                raise EventError(evt_label, "Event {} invalid in state {}".format(evt_label, initial.LABEL))
+                raise EventError(evt_label, 'Event {} invalid in state {}'.format(evt_label, initial.LABEL))
 
             result = wrapped(self, *a, **kw)
             if not (result is False or isinstance(result, plumpy.Future)):
                 if to_states != '*' and not any(isinstance(self._state, state) for state in to_states):
                     if self._state == initial:
-                        raise EventError(evt_label, "Machine did not transition")
+                        raise EventError(evt_label, 'Machine did not transition')
                     else:
                         raise EventError(
-                            evt_label, "Event produced invalid state transition from "
-                            "{} to {}".format(initial.LABEL, self._state.LABEL))
+                            evt_label, 'Event produced invalid state transition from '
+                            '{} to {}'.format(initial.LABEL, self._state.LABEL))
 
             return result
 
@@ -150,7 +150,7 @@ class State(object):
     def exit(self):
         """ Exiting the state """
         if self.is_terminal():
-            raise InvalidStateError("Cannot exit a terminal state {}".format(self.LABEL))
+            raise InvalidStateError('Cannot exit a terminal state {}'.format(self.LABEL))
         pass
 
     def create_state(self, state_label, *args, **kwargs):
@@ -209,7 +209,7 @@ class StateMachine(metaclass=StateMachineMeta):
         if cls.STATES is not None:
             return cls.STATES
 
-        raise RuntimeError("States not defined")
+        raise RuntimeError('States not defined')
 
     @classmethod
     def initial_state_label(cls):
@@ -258,7 +258,7 @@ class StateMachine(metaclass=StateMachineMeta):
         pass
 
     def __str__(self):
-        return "<{}> ({})".format(self.__class__.__name__, self.state)
+        return '<{}> ({})'.format(self.__class__.__name__, self.state)
 
     def create_initial_state(self):
         return self.get_state_class(self.initial_state_label())(self)
@@ -296,7 +296,7 @@ class StateMachine(metaclass=StateMachineMeta):
 
     def transition_to(self, new_state, *args, **kwargs):
         assert not self._transitioning, \
-            "Cannot call transition_to when already transitioning state"
+            'Cannot call transition_to when already transitioning state'
 
         initial_state_label = self._state.LABEL if self._state is not None else None
         label = None
@@ -350,7 +350,7 @@ class StateMachine(metaclass=StateMachineMeta):
         try:
             return self.get_states_map()[state_label](self, *args, **kwargs)
         except KeyError:
-            raise ValueError("{} is not a valid state".format(state_label))
+            raise ValueError('{} is not a valid state'.format(state_label))
 
     def _exit_current_state(self, next_state):
         """ Exit the given state """
@@ -363,7 +363,7 @@ class StateMachine(metaclass=StateMachineMeta):
             return  # Nothing to exit
 
         if next_state.LABEL not in self._state.ALLOWED:
-            raise RuntimeError("Cannot transition from {} to {}".format(self._state.LABEL, next_state.label))
+            raise RuntimeError('Cannot transition from {} to {}'.format(self._state.LABEL, next_state.label))
         self._fire_state_event(StateEventHook.EXITING_STATE, next_state)
         self._state.do_exit()
 
@@ -391,4 +391,4 @@ class StateMachine(metaclass=StateMachineMeta):
         try:
             return self.get_states_map()[state]
         except KeyError:
-            raise ValueError("{} is not a valid state".format(state))
+            raise ValueError('{} is not a valid state'.format(state))

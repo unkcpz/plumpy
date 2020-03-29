@@ -1,7 +1,8 @@
-from __future__ import absolute_import
-import plumpy
-from test import test_utils
 import unittest
+import asyncio
+
+import plumpy
+from test import utils
 import yaml
 
 from . import utils
@@ -76,16 +77,18 @@ class TestSavable(unittest.TestCase):
         self.assertNotEqual(saved_state1, saved_state3)
 
 
-class TestBundle(utils.TestCaseWithLoop):
+class TestBundle(unittest.TestCase):
 
     def test_bundle_load_context(self):
         """ Check that the loop from the load context is used """
-        proc = test_utils.DummyProcess(loop=self.loop)
+        loop1 = asyncio.new_event_loop()
+        proc = utils.DummyProcess(loop=loop1)
         bundle = plumpy.Bundle(proc)
 
-        loop2 = plumpy.new_event_loop()
+        loop2 = asyncio.new_event_loop()
         proc2 = bundle.unbundle(plumpy.LoadSaveContext(loop=loop2))
-        self.assertIs(loop2, proc2.loop())
+        self.assertIs(proc2.loop(), loop2)
+        self.assertIsNot(proc2.loop(), loop1)
 
     def test_bundle_yaml(self):
         bundle = plumpy.Bundle(Save1())

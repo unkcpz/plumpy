@@ -17,7 +17,6 @@ UNSPECIFIED = ()
 
 __all__ = ['UNSPECIFIED', 'PortValidationError', 'Port', 'InputPort', 'OutputPort']
 
-
 VALIDATOR_SIGNATURE_DEPRECATION_WARNING = """the validator `{}` has a signature that only takes a single argument.
     This has been deprecated and the new signature is `validator(value, port)` where the `port` argument will be the
     port instance to which the validator has been assigned."""
@@ -199,7 +198,7 @@ class Port(metaclass=abc.ABCMeta):
             else:
                 result = self.validator(value, self)
             if result is not None:
-                assert isinstance(result, str), "Validator returned non string type"
+                assert isinstance(result, str), 'Validator returned non string type'
                 validation_error = result
 
         if validation_error:
@@ -225,16 +224,15 @@ class InputPort(Port):
         return False
 
     def __init__(self, name, valid_type=None, help=None, default=UNSPECIFIED, required=True, validator=None):
-        super(InputPort, self).__init__(
-            name,
-            valid_type=valid_type,
-            help=help,
-            required=InputPort.required_override(required, default),
-            validator=validator)
+        super(InputPort, self).__init__(name,
+                                        valid_type=valid_type,
+                                        help=help,
+                                        required=InputPort.required_override(required, default),
+                                        validator=validator)
 
         if required is not InputPort.required_override(required, default):
             _LOGGER.info("the required attribute for the input port '{}' was overridden "
-                         "because a default was specified".format(name))
+                         'because a default was specified'.format(name))
 
         if default is not UNSPECIFIED:
 
@@ -243,7 +241,7 @@ class InputPort(Port):
             if not callable(default):
                 validation_error = self.validate(default)
                 if validation_error:
-                    raise ValueError("Invalid default value: {}".format(validation_error.message))
+                    raise ValueError('Invalid default value: {}'.format(validation_error.message))
 
         self._default = default
 
@@ -310,8 +308,11 @@ class PortNamespace(collections.MutableMapping, Port):
             namespace. As soon as a value is specified in the parent namespace for this port, even if it is empty, this
             property is ignored and the population of defaults is always performed.
         """
-        super(PortNamespace, self).__init__(
-            name=name, help=help, required=required, validator=validator, valid_type=valid_type)
+        super(PortNamespace, self).__init__(name=name,
+                                            help=help,
+                                            required=required,
+                                            validator=validator,
+                                            valid_type=valid_type)
         self._ports = {}
         self.default = default
         self.populate_defaults = populate_defaults

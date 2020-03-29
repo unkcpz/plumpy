@@ -1,32 +1,5 @@
 """Event and loop related classes and functions"""
-from __future__ import absolute_import
 import sys
-from tornado import ioloop
-import tornado.gen
-
-__all__ = ['new_event_loop', 'set_event_loop', 'get_event_loop', 'run_until_complete']
-
-get_event_loop = ioloop.IOLoop.current  # pylint: disable=invalid-name
-
-
-def new_event_loop():
-    loop = ioloop.IOLoop()
-    loop.make_current()
-    return loop
-
-
-def set_event_loop(loop):
-    if loop is None:
-        ioloop.IOLoop.clear_instance()
-    else:
-        loop.make_current()
-
-
-def run_until_complete(future, loop=None):
-    if loop is None:
-        loop = get_event_loop()
-
-    return loop.run_sync(lambda: future)
 
 
 class ProcessCallback(object):  # pylint: disable=useless-object-inheritance

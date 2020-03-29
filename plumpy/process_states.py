@@ -10,7 +10,6 @@ try:
 except ImportError:
     _HAS_TBLIB = False
 
-from tornado.gen import coroutine, Return
 import yaml
 
 from . import futures
@@ -251,7 +250,7 @@ class Running(State):
         elif isinstance(command, Continue):
             return self.create_state(ProcessState.RUNNING, command.continue_fn, *command.args)
         else:
-            raise ValueError("Unrecognised command")
+            raise ValueError('Unrecognised command')
 
 
 @auto_persist('msg', 'data')
@@ -268,7 +267,7 @@ class Waiting(State):
     def __str__(self):
         state_info = super(Waiting, self).__str__()
         if self.msg is not None:
-            state_info += " ({})".format(self.msg)
+            state_info += ' ({})'.format(self.msg)
         return state_info
 
     def __init__(self, process, done_callback, msg=None, data=None):
@@ -314,7 +313,7 @@ class Waiting(State):
         return next_state
 
     def resume(self, value=NULL):
-        assert self._waiting_future is not None, "Not yet waiting"
+        assert self._waiting_future is not None, 'Not yet waiting'
         self._waiting_future.set_result(value)
 
 
@@ -335,7 +334,7 @@ class Excepted(State):
         self.traceback = trace_back
 
     def __str__(self):
-        return "{} ({})".format(
+        return '{} ({})'.format(
             super(Excepted, self).__str__(),
             traceback.format_exception_only(type(self.exception), self.exception)[0])
 
@@ -343,7 +342,7 @@ class Excepted(State):
         super(Excepted, self).save_instance_state(out_state, save_context)
         out_state[self.EXC_VALUE] = yaml.dump(self.exception)
         if self.traceback is not None:
-            out_state[self.TRACEBACK] = "".join(traceback.format_tb(self.traceback))
+            out_state[self.TRACEBACK] = ''.join(traceback.format_tb(self.traceback))
 
     def load_instance_state(self, saved_state, load_context):
         super(Excepted, self).load_instance_state(saved_state, load_context)

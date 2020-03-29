@@ -1,13 +1,13 @@
+max-line-length: 120
+
 ignore-paths:
-    - doc
+    - docs
     - examples
     - test
     - utils
 
 pylint:
-    max-line-length: 120
-    disable:
-      - missing-docstring
+  run: true
 
 pyflakes:
   run: false
@@ -17,4 +17,3 @@ pep8:
 
 mccabe:
   run: false
-

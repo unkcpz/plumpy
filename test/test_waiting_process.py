@@ -1,13 +1,15 @@
+import unittest
+import asyncio
+
 import plumpy
 from plumpy import Process, ProcessState, BundleKeys
-from test.test_utils import ThreeSteps, \
+from test.utils import ThreeSteps, \
     DummyProcessWithOutput, TEST_WAITING_PROCESSES, WaitForSignalProcess, \
     check_process_against_snapshots, ProcessSaver
 
-from . import utils
 
+class TestWaitingProcess(unittest.TestCase):
 
-class TestWaitingProcess(utils.TestCaseWithLoop):
     def test_instance_state(self):
         proc = ThreeSteps()
         wl = ProcessSaver(proc)
@@ -17,12 +19,13 @@ class TestWaitingProcess(utils.TestCaseWithLoop):
             self.assertEqual(outputs, bundle.get(BundleKeys.OUTPUTS, {}))
 
     def test_saving_each_step(self):
+        loop = asyncio.get_event_loop()
         for proc_class in TEST_WAITING_PROCESSES:
             proc = proc_class()
             saver = ProcessSaver(proc)
             saver.capture()
 
-            self.assertTrue(check_process_against_snapshots(self.loop, proc_class, saver.snapshots))
+            self.assertTrue(check_process_against_snapshots(loop, proc_class, saver.snapshots))
 
     def test_kill(self):
         process = WaitForSignalProcess()

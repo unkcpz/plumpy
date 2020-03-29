@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
 """The main Process module"""
-
-from __future__ import absolute_import
 import abc
 import contextlib
 import functools
@@ -9,15 +7,13 @@ import copy
 import logging
 import time
 import sys
-import threading
 import uuid
 import inspect
+import asyncio
 
 from aiocontextvars import ContextVar
-from pika.exceptions import ConnectionClosed
-import asyncio
+from aio_pika.exceptions import ConnectionClosed
 import yaml
-
 import kiwipy
 
 from .process_listener import ProcessListener
@@ -34,7 +30,6 @@ from . import events
 from . import persistence
 from . import process_comms
 from . import process_states
-from . import ports
 from . import utils
 
 # pylint: disable=too-many-lines
@@ -55,7 +50,9 @@ class BundleKeys(object):
     INPUTS_PARSED = 'INPUTS_PARSED'
     OUTPUTS = 'OUTPUTS'
 
-_process_stack = ContextVar('process stack', default=[])
+
+_process_stack = ContextVar('process stack', default=[])  # pylint: disable=invalid-name
+
 
 class ProcessStateMachineMeta(abc.ABCMeta, state_machine.StateMachineMeta):
     pass
@@ -69,8 +66,8 @@ def ensure_not_closed(func):
 
     @functools.wraps(func)
     def func_wrapper(self, *args, **kwargs):
-        if self._closed:
-            raise exceptions.ClosedError("Process is closed")
+        if self._closed:  # pylint: disable=protected-access
+            raise exceptions.ClosedError('Process is closed')
         return func(self, *args, **kwargs)
 
     return func_wrapper
@@ -114,6 +111,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
     always called immediately after that state is entered but before being
     executed.
     """
+    # pylint: disable=too-many-instance-attributes, too-many-public-methods
 
     # Static class stuff ######################
     _spec_class = ProcessSpec
@@ -169,9 +167,9 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
                 cls.__called = False
                 cls.define(cls._spec)
                 assert cls.__called, \
-                    "Process.define() was not called by {}\n" \
-                    "Hint: Did you forget to call the superclass method in your define? " \
-                    "Try: super({}, cls).define(spec)".format(cls, cls.__name__)
+                    'Process.define() was not called by {}\n' \
+                    'Hint: Did you forget to call the superclass method in your define? ' \
+                    'Try: super({}, cls).define(spec)'.format(cls, cls.__name__)
                 return cls._spec
             except Exception:
                 del cls._spec
@@ -256,7 +254,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         self._parsed_inputs = None
         self._outputs = {}
         self._uuid = None
-        self._CREATION_TIME = None
+        self._CREATION_TIME = None  # pylint: disable=invalid-name
 
         # Runtime variables
         self._future = persistence.SavableFuture()
@@ -274,21 +272,21 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
                 identifier = self._communicator.add_rpc_subscriber(self.message_receive, identifier=str(self.pid))
                 self.add_cleanup(functools.partial(self._communicator.remove_rpc_subscriber, identifier))
             except kiwipy.TimeoutError:
-                self.logger.exception("Process<%s> failed to register as an RPC subscriber", self.pid)
+                self.logger.exception('Process<%s> failed to register as an RPC subscriber', self.pid)
 
             try:
-                identifier = self._communicator.add_broadcast_subscriber(
-                    self.broadcast_receive, identifier=str(self.pid))
+                identifier = self._communicator.add_broadcast_subscriber(self.broadcast_receive,
+                                                                         identifier=str(self.pid))
                 self.add_cleanup(functools.partial(self._communicator.remove_broadcast_subscriber, identifier))
             except kiwipy.TimeoutError:
-                self.logger.exception("Process<%s> failed to register as a broadcast subscriber", self.pid)
+                self.logger.exception('Process<%s> failed to register as a broadcast subscriber', self.pid)
 
         if not self._future.done():
 
             def try_killing(future):
                 if future.cancelled():
                     if not self.kill('Killed by future being cancelled'):
-                        self.logger.warning("Failed to kill process on future cancel")
+                        self.logger.warning('Failed to kill process on future cancel')
 
             self._future.add_done_callback(try_killing)
 
@@ -365,8 +363,11 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
 
     @ensure_not_closed
     def launch(self, process_class, inputs=None, pid=None, logger=None):
-        process = process_class(
-            inputs=inputs, pid=pid, logger=logger, loop=self.loop(), communicator=self._communicator)
+        process = process_class(inputs=inputs,
+                                pid=pid,
+                                logger=logger,
+                                loop=self.loop(),
+                                communicator=self._communicator)
         asyncio.ensure_future(process.step_until_terminated())
         return process
 
@@ -469,8 +470,8 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
             yield
         finally:
             assert Process.current() is self, \
-                "Somehow, the process at the top of the stack is not me, " \
-                "but another process! ({} != {})".format(self, Process.current())
+                'Somehow, the process at the top of the stack is not me, ' \
+                'but another process! ({} != {})'.format(self, Process.current())
             _process_stack.get().pop()
 
     async def _run_task(self, callback, *args, **kwargs):
@@ -531,7 +532,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         if 'loop' in load_context:
             self._loop = load_context.loop
         else:
-            self._loop = events.get_event_loop()
+            self._loop = asyncio.get_event_loop()
 
         self._state = self.recreate_state(saved_state['_state'])
 
@@ -566,7 +567,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
     # endregion
 
     def add_process_listener(self, listener):
-        assert (listener != self), "Cannot listen to yourself!"
+        assert (listener != self), 'Cannot listen to yourself!'
         self.__event_helper.add_listener(listener)
 
     def remove_process_listener(self, listener):
@@ -578,7 +579,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
 
     @protected
     def log_with_pid(self, level, msg):
-        self.logger.log(level, "%s: %s", self.pid, msg)
+        self.logger.log(level, '%s: %s', self.pid, msg)
 
     # region Events
 
@@ -615,8 +616,9 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         if self._communicator:
             from_label = from_state.LABEL.value if from_state is not None else None
             try:
-                self._communicator.broadcast_send(
-                    body=None, sender=self.pid, subject='state_changed.{}.{}'.format(from_label, self.state.value))
+                self._communicator.broadcast_send(body=None,
+                                                  sender=self.pid,
+                                                  subject='state_changed.{}.{}'.format(from_label, self.state.value))
             except ConnectionClosed:
                 self.logger.info('no connection available to broadcast state change from %s to %s', from_label,
                                  self.state.value)
@@ -798,9 +800,9 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
             return status_info
 
         # Didn't match any known intents
-        raise RuntimeError("Unknown intent")
+        raise RuntimeError('Unknown intent')
 
-    def broadcast_receive(self, _comm, body, sender, subject, correlation_id):
+    def broadcast_receive(self, _comm, body, sender, subject, correlation_id):  # pylint: disable=unused-argument
         """
         Coroutine called when the process receives a message from the communicator
 
@@ -818,7 +820,8 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         if subject == process_comms.Intent.KILL:
             return self._schedule_rpc(self.kill, msg=body)
 
-        return
+        # TODO: return an exception here?
+        return None
 
     def _schedule_rpc(self, callback, *args, **kwargs):
         """
@@ -1055,7 +1058,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
 
     @ensure_not_closed
     async def step(self):
-        assert not self.has_terminated(), "Cannot step, already terminated"
+        assert not self.has_terminated(), 'Cannot step, already terminated'
         # import pdb; pdb.set_trace()
 
         if self.paused:

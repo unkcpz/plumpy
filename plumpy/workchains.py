@@ -236,9 +236,9 @@ class _FunctionCall(_Instruction):
         try:
             args = get_arg_spec(func)[0]
         except TypeError:
-            raise TypeError("func is not a function, got {}".format(type(func)))
+            raise TypeError('func is not a function, got {}'.format(type(func)))
         if len(args) != 1:
-            raise TypeError("Step must take one argument only: self")
+            raise TypeError('Step must take one argument only: self')
 
         self._fn = func
 
@@ -253,7 +253,7 @@ class _FunctionCall(_Instruction):
         desc = self._fn.__name__
         if self._fn.__doc__:
             doc = re.sub(r'\n\s*', ' ', self._fn.__doc__).strip()
-            desc += "({})".format(doc)
+            desc += '({})'.format(doc)
 
         return desc
 
@@ -552,7 +552,7 @@ class _While(_Conditional, _Instruction, collections.Sequence):
         return _WhileStepper.recreate_from(saved_state, load_context)
 
     def get_description(self):
-        return {"while({})".format(self.predicate.__name__): self.body.get_description()}
+        return {'while({})'.format(self.predicate.__name__): self.body.get_description()}
 
 
 class _PropagateReturn(BaseException):

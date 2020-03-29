@@ -7,6 +7,7 @@ class MyCls(object):
 
 
 class TestDefaultObjectLoader(unittest.TestCase):
+
     def test_simple_load(self):
         loader = plumpy.DefaultObjectLoader()
         identifier = loader.identify_object(MyCls)
@@ -14,7 +15,9 @@ class TestDefaultObjectLoader(unittest.TestCase):
         self.assertIs(MyCls, cls)
 
     def test_custom_loader(self):
+
         class CustomClassLoader(plumpy.ObjectLoader):
+
             def identify_object(self, obj):
                 if obj is MyCls:
                     return 'MyCls'

@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 import logging
 
 from .loaders import *
@@ -17,7 +16,7 @@ from .utils import *
 from .version import *
 from .workchains import *
 
-__all__ = (events.__all__ + exceptions.__all__ + processes.__all__ + utils.__all__ + futures.__all__ + mixins.__all__ +
+__all__ = (exceptions.__all__ + processes.__all__ + utils.__all__ + futures.__all__ + mixins.__all__ +
            persistence.__all__ + communications.__all__ + process_comms.__all__ + version.__all__ +
            process_listener.__all__ + workchains.__all__ + loaders.__all__ + ports.__all__ + process_states.__all__)
 
@@ -32,7 +31,7 @@ class NullHandler(logging.Handler):
         pass
 
 
-logging.getLogger("plumpy").addHandler(NullHandler())
+logging.getLogger('plumpy').addHandler(NullHandler())
 
 try:
     import functools

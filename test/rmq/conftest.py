@@ -5,7 +5,6 @@ import shortuuid
 import kiwipy
 from kiwipy import rmq
 
-
 from . import utils
 
 try:
@@ -35,9 +34,9 @@ except ImportError:
 async def new_communicator(connection, settings=None) -> kiwipy.rmq.RmqCommunicator:
     settings = settings or {}
 
-    message_exchange = "{}.{}".format(__file__, shortuuid.uuid())
-    task_exchange = "{}.{}".format(__file__, shortuuid.uuid())
-    task_queue = "{}.{}".format(__file__, shortuuid.uuid())
+    message_exchange = '{}.{}'.format(__file__, shortuuid.uuid())
+    task_exchange = '{}.{}'.format(__file__, shortuuid.uuid())
+    task_queue = '{}.{}'.format(__file__, shortuuid.uuid())
 
     communicator = rmq.RmqCommunicator(connection,
                                        message_exchange=message_exchange,

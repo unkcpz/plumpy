@@ -1,31 +1,30 @@
 import unittest
+import asyncio
 
 import shortuuid
 import kiwipy.rmq
 
 import pytest
-import asyncio
 import plumpy
 import plumpy.communications
 from plumpy import process_comms
-from test import test_utils
-from .. import utils
+from test import utils
+
 
 class TestRemoteProcessController(unittest.TestCase):
 
     def setUp(self):
         super(TestRemoteProcessController, self).setUp()
 
-        message_exchange = "{}.{}".format(self.__class__.__name__, shortuuid.uuid())
-        task_exchange = "{}.{}".format(self.__class__.__name__, shortuuid.uuid())
-        task_queue = "{}.{}".format(self.__class__.__name__, shortuuid.uuid())
+        message_exchange = '{}.{}'.format(self.__class__.__name__, shortuuid.uuid())
+        task_exchange = '{}.{}'.format(self.__class__.__name__, shortuuid.uuid())
+        task_queue = '{}.{}'.format(self.__class__.__name__, shortuuid.uuid())
 
-        self.communicator = kiwipy.rmq.connect(
-            connection_params={'url': 'amqp://guest:guest@localhost:5672/'},
-            message_exchange=message_exchange,
-            task_exchange=task_exchange,
-            task_queue=task_queue,
-            testing_mode=True)
+        self.communicator = kiwipy.rmq.connect(connection_params={'url': 'amqp://guest:guest@localhost:5672/'},
+                                               message_exchange=message_exchange,
+                                               task_exchange=task_exchange,
+                                               task_queue=task_queue,
+                                               testing_mode=True)
 
         self.process_controller = process_comms.RemoteProcessController(self.communicator)
 
@@ -37,7 +36,7 @@ class TestRemoteProcessController(unittest.TestCase):
 
     @pytest.mark.asyncio
     async def test_pause(self):
-        proc = test_utils.WaitForSignalProcess(communicator=self.communicator)
+        proc = utils.WaitForSignalProcess(communicator=self.communicator)
         # Run the process in the background
         asyncio.ensure_future(proc.step_until_terminated())
         # Send a pause message
@@ -49,7 +48,7 @@ class TestRemoteProcessController(unittest.TestCase):
 
     @pytest.mark.asyncio
     async def test_play(self):
-        proc = test_utils.WaitForSignalProcess(communicator=self.communicator)
+        proc = utils.WaitForSignalProcess(communicator=self.communicator)
         # Run the process in the background
         asyncio.ensure_future(proc.step_until_terminated())
         self.assertTrue(proc.pause())
@@ -63,7 +62,7 @@ class TestRemoteProcessController(unittest.TestCase):
 
     @pytest.mark.asyncio
     async def test_kill(self):
-        proc = test_utils.WaitForSignalProcess(communicator=self.communicator)
+        proc = utils.WaitForSignalProcess(communicator=self.communicator)
         # Run the process in the event loop
         asyncio.ensure_future(proc.step_until_terminated())
 
@@ -76,7 +75,7 @@ class TestRemoteProcessController(unittest.TestCase):
 
     @pytest.mark.asyncio
     async def test_status(self):
-        proc = test_utils.WaitForSignalProcess(communicator=self.communicator)
+        proc = utils.WaitForSignalProcess(communicator=self.communicator)
         # Run the process in the background
         asyncio.ensure_future(proc.step_until_terminated())
 
@@ -92,13 +91,13 @@ class TestRemoteProcessController(unittest.TestCase):
             messages.append(msg)
 
         self.communicator.add_broadcast_subscriber(on_broadcast_receive)
-        proc = test_utils.DummyProcess(communicator=self.communicator)
+        proc = utils.DummyProcess(communicator=self.communicator)
         proc.execute()
 
         expected_subjects = []
-        for i, state in enumerate(test_utils.DummyProcess.EXPECTED_STATE_SEQUENCE):
-            from_state = test_utils.DummyProcess.EXPECTED_STATE_SEQUENCE[i - 1].value if i != 0 else None
-            expected_subjects.append("state_changed.{}.{}".format(from_state, state.value))
+        for i, state in enumerate(utils.DummyProcess.EXPECTED_STATE_SEQUENCE):
+            from_state = utils.DummyProcess.EXPECTED_STATE_SEQUENCE[i - 1].value if i != 0 else None
+            expected_subjects.append('state_changed.{}.{}'.format(from_state, state.value))
 
         for i, message in enumerate(messages):
             self.assertEqual(message['subject'], expected_subjects[i])
@@ -109,16 +108,15 @@ class TestRemoteProcessThreadController(unittest.TestCase):
     def setUp(self):
         super(TestRemoteProcessThreadController, self).setUp()
 
-        message_exchange = "{}.{}".format(self.__class__.__name__, shortuuid.uuid())
-        task_exchange = "{}.{}".format(self.__class__.__name__, shortuuid.uuid())
-        task_queue = "{}.{}".format(self.__class__.__name__, shortuuid.uuid())
+        message_exchange = '{}.{}'.format(self.__class__.__name__, shortuuid.uuid())
+        task_exchange = '{}.{}'.format(self.__class__.__name__, shortuuid.uuid())
+        task_queue = '{}.{}'.format(self.__class__.__name__, shortuuid.uuid())
 
-        self.communicator = kiwipy.rmq.connect(
-            connection_params={'url': 'amqp://guest:guest@localhost:5672/'},
-            message_exchange=message_exchange,
-            task_exchange=task_exchange,
-            task_queue=task_queue,
-            testing_mode=True)
+        self.communicator = kiwipy.rmq.connect(connection_params={'url': 'amqp://guest:guest@localhost:5672/'},
+                                               message_exchange=message_exchange,
+                                               task_exchange=task_exchange,
+                                               task_queue=task_queue,
+                                               testing_mode=True)
 
         self.process_controller = process_comms.RemoteProcessThreadController(self.communicator)
 
@@ -130,7 +128,7 @@ class TestRemoteProcessThreadController(unittest.TestCase):
 
     @pytest.mark.asyncio
     async def test_pause(self):
-        proc = test_utils.WaitForSignalProcess(communicator=self.communicator)
+        proc = utils.WaitForSignalProcess(communicator=self.communicator)
         # Send a pause message
         pause_future = await self.process_controller.pause_process(proc.pid)
         self.assertIsInstance(pause_future, kiwipy.Future)
@@ -146,7 +144,7 @@ class TestRemoteProcessThreadController(unittest.TestCase):
         """Test pausing all processes on a communicator"""
         procs = []
         for _ in range(10):
-            procs.append(test_utils.WaitForSignalProcess(communicator=self.communicator))
+            procs.append(utils.WaitForSignalProcess(communicator=self.communicator))
 
         self.process_controller.pause_all("Slow yo' roll")
         # Wait until they are all paused
@@ -157,7 +155,7 @@ class TestRemoteProcessThreadController(unittest.TestCase):
         """Test pausing all processes on a communicator"""
         procs = []
         for _ in range(10):
-            proc = test_utils.WaitForSignalProcess(communicator=self.communicator)
+            proc = utils.WaitForSignalProcess(communicator=self.communicator)
             procs.append(proc)
             proc.pause('hold tight')
 
@@ -168,7 +166,7 @@ class TestRemoteProcessThreadController(unittest.TestCase):
 
     @pytest.mark.asyncio
     async def test_play(self):
-        proc = test_utils.WaitForSignalProcess(communicator=self.communicator)
+        proc = utils.WaitForSignalProcess(communicator=self.communicator)
         self.assertTrue(proc.pause())
 
         # Send a play message
@@ -182,7 +180,7 @@ class TestRemoteProcessThreadController(unittest.TestCase):
 
     @pytest.mark.asyncio
     async def test_kill(self):
-        proc = test_utils.WaitForSignalProcess(communicator=self.communicator)
+        proc = utils.WaitForSignalProcess(communicator=self.communicator)
 
         # Send a kill message
         kill_future = await self.process_controller.kill_process(proc.pid)
@@ -199,7 +197,7 @@ class TestRemoteProcessThreadController(unittest.TestCase):
         """Test pausing all processes on a communicator"""
         procs = []
         for _ in range(10):
-            procs.append(test_utils.WaitForSignalProcess(communicator=self.communicator))
+            procs.append(utils.WaitForSignalProcess(communicator=self.communicator))
 
         self.process_controller.kill_all('bang bang, I shot you down')
         await utils.wait_util(lambda: all([proc.killed() for proc in procs]))
@@ -207,7 +205,7 @@ class TestRemoteProcessThreadController(unittest.TestCase):
 
     @pytest.mark.asyncio
     async def test_status(self):
-        proc = test_utils.WaitForSignalProcess(communicator=self.communicator)
+        proc = utils.WaitForSignalProcess(communicator=self.communicator)
         # Run the process in the background
         asyncio.ensure_future(proc.step_until_terminated())
 

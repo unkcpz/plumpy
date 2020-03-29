@@ -50,7 +50,7 @@ confidence=
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use"--disable=all --enable=classes
 # --disable=W"
-disable=locally-disabled,useless-object-inheritance
+disable=locally-disabled, useless-suppression, useless-object-inheritance, missing-docstring, no-else-raise, import-outside-toplevel, unnecessary-pass
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -93,10 +93,10 @@ max-nested-blocks=5
 [BASIC]
 
 # Naming hint for argument names
-argument-name-hint=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
+argument-name-hint=(([a-z][a-z0-9_]{1,30})|(_[a-z0-9_]*))$
 
 # Regular expression matching correct argument names
-argument-rgx=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
+argument-rgx=(([a-z][a-z0-9_]{1,30})|(_[a-z0-9_]*))$
 
 # Naming hint for attribute names
 attr-name-hint=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
@@ -172,10 +172,10 @@ no-docstring-rgx=^_,setUp,tearDown
 property-classes=abc.abstractproperty
 
 # Naming hint for variable names
-variable-name-hint=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
+variable-name-hint=(([a-z][a-z0-9_]{1,30})|(_[a-z0-9_]*))$
 
 # Regular expression matching correct variable names
-variable-rgx=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
+variable-rgx=(([a-z][a-z0-9_]{1,30})|(_[a-z0-9_]*))$
 
 
 [FORMAT]
@@ -285,7 +285,7 @@ redefining-builtins-modules=future.builtins
 [MISCELLANEOUS]
 
 # List of note tags to take in consideration, separated by a comma.
-notes=FIXME,XXX,TODO
+notes=FIXME,XXX
 
 
 [TYPECHECK]

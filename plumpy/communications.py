@@ -4,10 +4,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 import functools
 
-from tornado import concurrent, ioloop
-
-import kiwipy
 import asyncio
+import kiwipy
 
 from . import futures
 
@@ -81,7 +79,7 @@ def wrap_communicator(communicator, loop=None):
     :param communicator: the communicator to wrap
     :type communicator: :class:`kiwipy.Communicator`
     :param loop: the event loop to schedule callbacks on
-    :type loop: :class:`tornado.ioloop.IOLoop`
+    :type loop: An event loop based on the selectors module depend on system.
     :return: a communicator wrapper
     :rtype: :class:`plumpy.LoopCommunicator`
     """
@@ -101,8 +99,8 @@ class LoopCommunicator(kiwipy.Communicator):
         """
         :param communicator: The kiwipy communicator
         :type communicator: :class:`kiwipy.Communicator`
-        :param loop: The tornado event loop to schedule callbacks on
-        :type loop: :class:`tornado.ioloop.IOLoop`
+        :param loop: The event loop to schedule callbacks on
+        :type loop: An event loop based on the selectors module depend on system.
         """
         assert communicator is not None
 

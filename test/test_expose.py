@@ -1,13 +1,12 @@
-from __future__ import absolute_import
+import unittest
 
 from plumpy.ports import PortNamespace
 from plumpy.processes import Process
 from plumpy.process_spec import ProcessSpec
-from test.test_utils import NewLoopProcess
-from test import utils
+from test.utils import NewLoopProcess
 
 
-class TestExposeProcess(utils.TestCaseWithLoop):
+class TestExposeProcess(unittest.TestCase):
 
     def setUp(self):
         super(TestExposeProcess, self).setUp()
@@ -200,15 +199,14 @@ class TestExposeProcess(utils.TestCaseWithLoop):
 
         ParentProcessSpec = ProcessSpec()
         ParentProcessSpec.input('c', valid_type=float)
-        ParentProcessSpec._expose_ports(
-            process_class=None,
-            source=ChildProcessSpec.inputs,
-            destination=ParentProcessSpec.inputs,
-            expose_memory=ParentProcessSpec._exposed_inputs,
-            namespace=None,
-            exclude=(),
-            include=None,
-            namespace_options={})
+        ParentProcessSpec._expose_ports(process_class=None,
+                                        source=ChildProcessSpec.inputs,
+                                        destination=ParentProcessSpec.inputs,
+                                        expose_memory=ParentProcessSpec._exposed_inputs,
+                                        namespace=None,
+                                        exclude=(),
+                                        include=None,
+                                        namespace_options={})
 
         # Verify that all the ports are there
         self.assertIn('a', ParentProcessSpec.inputs)
@@ -247,22 +245,21 @@ class TestExposeProcess(utils.TestCaseWithLoop):
 
         ParentProcessSpec = ProcessSpec()
         ParentProcessSpec.input('c', valid_type=float)
-        ParentProcessSpec._expose_ports(
-            process_class=None,
-            source=ChildProcessSpec.inputs,
-            destination=ParentProcessSpec.inputs,
-            expose_memory=ParentProcessSpec._exposed_inputs,
-            namespace=None,
-            exclude=(),
-            include=None,
-            namespace_options={
-                'validator': None,
-                'valid_type': None,
-                'required': True,
-                'dynamic': False,
-                'default': None,
-                'help': None,
-            })
+        ParentProcessSpec._expose_ports(process_class=None,
+                                        source=ChildProcessSpec.inputs,
+                                        destination=ParentProcessSpec.inputs,
+                                        expose_memory=ParentProcessSpec._exposed_inputs,
+                                        namespace=None,
+                                        exclude=(),
+                                        include=None,
+                                        namespace_options={
+                                            'validator': None,
+                                            'valid_type': None,
+                                            'required': True,
+                                            'dynamic': False,
+                                            'default': None,
+                                            'help': None,
+                                        })
 
         # Verify that all the ports are there
         self.assertIn('a', ParentProcessSpec.inputs)
@@ -300,15 +297,14 @@ class TestExposeProcess(utils.TestCaseWithLoop):
 
         ParentProcessSpec = ProcessSpec()
         ParentProcessSpec.input('c', valid_type=float)
-        ParentProcessSpec._expose_ports(
-            process_class=None,
-            source=ChildProcessSpec.inputs,
-            destination=ParentProcessSpec.inputs,
-            expose_memory=ParentProcessSpec._exposed_inputs,
-            namespace='namespace',
-            exclude=(),
-            include=None,
-            namespace_options={})
+        ParentProcessSpec._expose_ports(process_class=None,
+                                        source=ChildProcessSpec.inputs,
+                                        destination=ParentProcessSpec.inputs,
+                                        expose_memory=ParentProcessSpec._exposed_inputs,
+                                        namespace='namespace',
+                                        exclude=(),
+                                        include=None,
+                                        namespace_options={})
 
         # Verify that all the ports are there
         self.assertIn('a', ParentProcessSpec.inputs['namespace'])
@@ -332,17 +328,16 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         ParentProcessSpec = ProcessSpec()
 
         with self.assertRaises(ValueError):
-            ParentProcessSpec._expose_ports(
-                process_class=None,
-                source=ChildProcessSpec.inputs,
-                destination=ParentProcessSpec.inputs,
-                expose_memory=ParentProcessSpec._exposed_inputs,
-                namespace=None,
-                exclude=(),
-                include=None,
-                namespace_options={
-                    'non_existent': None,
-                })
+            ParentProcessSpec._expose_ports(process_class=None,
+                                            source=ChildProcessSpec.inputs,
+                                            destination=ParentProcessSpec.inputs,
+                                            expose_memory=ParentProcessSpec._exposed_inputs,
+                                            namespace=None,
+                                            exclude=(),
+                                            include=None,
+                                            namespace_options={
+                                                'non_existent': None,
+                                            })
 
     def test_expose_nested_include_top_level(self):
         """Test the include rules can be nested and are properly unwrapped."""

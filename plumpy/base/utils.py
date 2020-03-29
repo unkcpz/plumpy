@@ -12,7 +12,7 @@ def super_check(fn):
     def new_fn(self, *args, **kwargs):
         assert getattr(self, '_called', 0) >= 1, \
             "The function '{}' was not called through " \
-            "call_with_super_check".format(fn.__name__)
+            'call_with_super_check'.format(fn.__name__)
         fn(self, *args, **kwargs)
         self._called -= 1
 
@@ -29,5 +29,5 @@ def call_with_super_check(fn, *args, **kwargs):
     fn(*args, **kwargs)
     assert self._called == call_count, \
         "Base '{}' was not called from '{}'\n" \
-        "Hint: Did you forget to call the " \
-        "superclass method?".format(fn.__name__, self.__class__)
+        'Hint: Did you forget to call the ' \
+        'superclass method?'.format(fn.__name__, self.__class__)

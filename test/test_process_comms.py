@@ -4,25 +4,28 @@ import plumpy
 import asyncio
 
 from plumpy import communications, process_comms
-from test import test_utils
+from . import utils
 
 from kiwipy import rmq
 
+
 class Process(plumpy.Process):
+
     def run(self):
         pass
 
 
 class CustomObjectLoader(plumpy.DefaultObjectLoader):
+
     def load_object(self, identifier):
-        if identifier == "jimmy":
+        if identifier == 'jimmy':
             return Process
         else:
             return super(CustomObjectLoader, self).load_object(identifier)
 
     def identify_object(self, obj):
         if isinstance(obj, Process) or issubclass(obj, Process):
-            return "jimmy"
+            return 'jimmy'
         else:
             return super(CustomObjectLoader, self).identify_object(obj)
 
@@ -35,14 +38,14 @@ class TestProcessLauncher(unittest.TestCase):
         load_context = plumpy.LoadSaveContext()
         launcher = plumpy.ProcessLauncher(persister=persister, load_context=load_context)
 
-        process = test_utils.DummyProcess()
+        process = utils.DummyProcess()
         pid = process.pid
         persister.save_checkpoint(process)
         del process
         process = None
 
         result = await launcher._continue(None, **plumpy.create_continue_body(pid)[process_comms.TASK_ARGS])
-        self.assertEqual(test_utils.DummyProcess.EXPECTED_OUTPUTS, result)
+        self.assertEqual(utils.DummyProcess.EXPECTED_OUTPUTS, result)
 
     @pytest.mark.asyncio
     async def test_loader_is_used(self):

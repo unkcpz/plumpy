@@ -1,15 +1,14 @@
-from __future__ import absolute_import
+import unittest
 import tempfile
 
 if getattr(tempfile, 'TemporaryDirectory', None) is None:
     from backports import tempfile
 
 import plumpy
-from test.test_utils import ProcessWithCheckpoint
-from test.utils import TestCaseWithLoop
+from test.utils import ProcessWithCheckpoint
 
 
-class TestPicklePersister(TestCaseWithLoop):
+class TestPicklePersister(unittest.TestCase):
 
     def test_save_load_roundtrip(self):
         """
@@ -23,7 +22,7 @@ class TestPicklePersister(TestCaseWithLoop):
             persister.save_checkpoint(process)
 
             bundle = persister.load_checkpoint(process.pid)
-            load_context = plumpy.LoadSaveContext(loop=self.loop)
+            load_context = plumpy.LoadSaveContext()
             recreated = bundle.unbundle(load_context)
 
     def test_get_checkpoints_without_tags(self):

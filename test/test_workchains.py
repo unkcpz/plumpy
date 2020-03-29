@@ -1,5 +1,4 @@
 import inspect
-from tornado import gen
 
 import plumpy
 from plumpy.workchains import *
@@ -8,7 +7,6 @@ import unittest
 import pytest
 import asyncio
 
-from test import test_utils
 from . import utils
 
 
@@ -19,8 +17,8 @@ class Wf(WorkChain):
     @classmethod
     def define(cls, spec):
         super(Wf, cls).define(spec)
-        spec.input("value", default='A')
-        spec.input("n", default=3)
+        spec.input('value', default='A')
+        spec.input('n', default=3)
         spec.outputs.dynamic = True
         spec.outline(
             cls.s1,
@@ -132,7 +130,7 @@ class TestContext(unittest.TestCase):
             wc.ctx['new_attr']
 
 
-class TestWorkchain(utils.TestCaseWithLoop):
+class TestWorkchain(unittest.TestCase):
     maxDiff = None
 
     def test_run(self):
@@ -146,21 +144,21 @@ class TestWorkchain(utils.TestCaseWithLoop):
         # Check the steps that should have been run
         for step, finished in Wf.finished_steps.items():
             if step not in ['s3', 's4', 'isB']:
-                self.assertTrue(finished, "Step {} was not called by workflow".format(step))
+                self.assertTrue(finished, 'Step {} was not called by workflow'.format(step))
 
         # Try the elif(..) part
         finished_steps = Wf(inputs=dict(value=B, n=three)).execute()
         # Check the steps that should have been run
         for step, finished in finished_steps.items():
             if step not in ['isA', 's2', 's4']:
-                self.assertTrue(finished, "Step {} was not called by workflow".format(step))
+                self.assertTrue(finished, 'Step {} was not called by workflow'.format(step))
 
         # Try the else... part
         finished_steps = Wf(inputs=dict(value=C, n=three)).execute()
         # Check the steps that should have been run
         for step, finished in finished_steps.items():
             if step not in ['isA', 's2', 'isB', 's3']:
-                self.assertTrue(finished, "Step {} was not called by workflow".format(step))
+                self.assertTrue(finished, 'Step {} was not called by workflow'.format(step))
 
     def test_incorrect_outline(self):
 
@@ -195,8 +193,8 @@ class TestWorkchain(utils.TestCaseWithLoop):
         Wf(inputs=dict(a=x, b=x)).execute()
 
     def test_context(self):
-        A = "a"
-        B = "b"
+        A = 'a'
+        B = 'b'
 
         class ReturnA(plumpy.Process):
 
@@ -270,21 +268,21 @@ class TestWorkchain(utils.TestCaseWithLoop):
         # Check the steps that should have been run
         for step, finished in finished_steps.items():
             if step not in ['s3', 's4', 'isB']:
-                self.assertTrue(finished, "Step {} was not called by workflow".format(step))
+                self.assertTrue(finished, 'Step {} was not called by workflow'.format(step))
 
         # Try the elif(..) part
         finished_steps = self._run_with_checkpoints(Wf, inputs={'value': B, 'n': three})
         # Check the steps that should have been run
         for step, finished in finished_steps.items():
             if step not in ['isA', 's2', 's4']:
-                self.assertTrue(finished, "Step {} was not called by workflow".format(step))
+                self.assertTrue(finished, 'Step {} was not called by workflow'.format(step))
 
         # Try the else... part
         finished_steps = self._run_with_checkpoints(Wf, inputs={'value': C, 'n': three})
         # Check the steps that should have been run
         for step, finished in finished_steps.items():
             if step not in ['isA', 's2', 'isB', 's3']:
-                self.assertTrue(finished, "Step {} was not called by workflow".format(step))
+                self.assertTrue(finished, 'Step {} was not called by workflow'.format(step))
 
     def test_return_in_outline(self):
 
@@ -379,7 +377,7 @@ class TestWorkchain(utils.TestCaseWithLoop):
                 spec.outline(cls.run)
 
             def run(self):
-                self.out("value", 5)
+                self.out('value', 5)
 
         workchain = MainWorkChain()
         workchain.execute()
@@ -389,7 +387,7 @@ class TestWorkchain(utils.TestCaseWithLoop):
         workchain = IfTest()
         asyncio.ensure_future(workchain.step_until_terminated())
 
-        await test_utils.run_until_paused(workchain)
+        await utils.run_until_paused(workchain)
         self.assertTrue(workchain.ctx.s1)
         self.assertFalse(workchain.ctx.s2)
 
@@ -417,7 +415,7 @@ class TestWorkchain(utils.TestCaseWithLoop):
             @classmethod
             def define(cls, spec):
                 super(SimpleWc, cls).define(spec)
-                spec.output("_return")
+                spec.output('_return')
 
             def run(self):
                 self.out('_return', val)
@@ -458,7 +456,7 @@ class TestWorkchain(utils.TestCaseWithLoop):
         workchain.execute()
 
     def test_exception_tocontext(self):
-        my_exception = RuntimeError("Should not be reached")
+        my_exception = RuntimeError('Should not be reached')
 
         class Workchain(WorkChain):
 
@@ -468,7 +466,7 @@ class TestWorkchain(utils.TestCaseWithLoop):
                 spec.outline(cls.begin, cls.check)
 
             def begin(self):
-                self.to_context(result_a=self.launch(test_utils.ExceptionProcess))
+                self.to_context(result_a=self.launch(utils.ExceptionProcess))
 
             def check(self):
                 raise my_exception
@@ -541,7 +539,7 @@ class TestWorkchain(utils.TestCaseWithLoop):
         self.assertListEqual(collector.stepper_strings, stepper_strings)
 
 
-class TestImmutableInputWorkchain(utils.TestCaseWithLoop):
+class TestImmutableInputWorkchain(unittest.TestCase):
     """
     Test that inputs cannot be modified
     """

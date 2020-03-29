@@ -43,7 +43,7 @@ class DefaultObjectLoader(ObjectLoader):
     """
 
     def load_object(self, identifier):
-        mod, name = identifier.split(":")
+        mod, name = identifier.split(':')
         try:
             mod = importlib.import_module(mod)
         except ImportError as e:
@@ -55,7 +55,7 @@ class DefaultObjectLoader(ObjectLoader):
                 raise ValueError("object '{}' form identifier '{}' could not be loaded".format(name, identifier))
 
     def identify_object(self, obj):
-        identifier = "{}:{}".format(obj.__module__, obj.__name__)
+        identifier = '{}:{}'.format(obj.__module__, obj.__name__)
         # Make sure we can load the object
         self.load_object(identifier)
         return identifier

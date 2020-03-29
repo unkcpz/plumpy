@@ -1,14 +1,4 @@
 # yet another python formatter
-# modernizer: make sure our code-base is Python 3 ready
-- repo: https://github.com/python-modernize/python-modernize.git
-  sha: a234ce4e185cf77a55632888f1811d83b4ad9ef2
-  hooks:
-  - id: python-modernize
-    exclude: ^docs/
-    args:
-      - --write
-      - --nobackups
-
 - repo: local
   hooks:
   # yapf = yet another python formatter
@@ -18,6 +8,49 @@
     language: system
     types: [python]
     args: ["-i"]
+    exclude: &exclude_files >-
+      (?x)^(
+        docs/source/conf.py|
+        examples/process_waitAndResume.py|
+        examples/process_helloworld.py|
+        examples/workchain_simple.py|
+        plumpy/events.py|
+        plumpy/process_spec.py|
+        plumpy/exceptions.py|
+        plumpy/__init__.py|
+        plumpy/stack.py|
+        plumpy/base/__init__.py|
+        plumpy/settings.py|
+        plumpy/base/state_machine.py|
+        plumpy/base/utils.py|
+        plumpy/futures.py|
+        plumpy/lang.py|
+        plumpy/loaders.py|
+        plumpy/persistence.py|
+        plumpy/ports.py|
+        plumpy/process_comms.py|
+        plumpy/process_states.py|
+        plumpy/utils.py|
+        plumpy/version.py|
+        plumpy/workchains.py|
+        test/test_persistence.py|
+        test/persistence/test_inmemory.py|
+        test/base/test_statemachine.py|
+        test/base/test_utils.py|
+        test/test_process_spec.py|
+        test/persistence/test_pickle.py|
+        test/rmq/conftest.py|
+        test/rmq/test_communicator.py|
+        test/rmq/test_process_comms.py|
+        test/test_attributes_frozendict.py|
+        test/test_class_loader.py|
+        test/test_expose.py|
+        test/test_lang.py|
+        test/test_port.py|
+        test/test_process_comms.py|
+        test/test_waiting_process.py|
+        test/test_workchains.py|
+      )$
 
   # prospector: collection of linters
   - id: prospector
@@ -26,10 +59,10 @@
     name: prospector
     description: "This hook runs Prospector: https://github.com/landscapeio/prospector"
     entry: prospector
+    exclude: *exclude_files
 
 - repo: git://github.com/pre-commit/pre-commit-hooks
-  sha: v1.1.1
+  rev: v2.2.3
   hooks:
-  - id: check-yaml
-
-
+  - id: trailing-whitespace
+  - id: double-quote-string-fixer
