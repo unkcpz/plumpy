@@ -6,12 +6,11 @@ from kiwipy import rmq
 from tornado import testing
 
 import pytest
+
 import plumpy
+from plumpy import process_comms
 
-from plumpy import communications, process_comms
-from test import test_utils
-
-from kiwipy import rmq
+from .. import utils
 
 
 class Process(plumpy.Process):

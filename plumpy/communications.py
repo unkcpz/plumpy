@@ -53,8 +53,6 @@ def convert_to_comm(callback, loop=None):
     :param callback: the function to convert
     :return: a new callback function that returns a future
     """
-    print('convert')
-    print((id(asyncio.get_event_loop())))
 
     def converted(communicator, *args, **kwargs):
         print('inside convert')
@@ -103,9 +101,9 @@ class LoopCommunicator(kiwipy.Communicator):
         assert communicator is not None
 
         self._communicator = communicator
-        self._loop = loop or asyncio.new_event_loop()
+        self._loop = loop or asyncio.get_event_loop()
         print(testing_mode)
-        loop.set_debug(testing_mode)
+        self._loop.set_debug(testing_mode)
         self._subscribers = {}
 
     def loop(self):
