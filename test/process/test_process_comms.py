@@ -1,13 +1,10 @@
 import unittest
 import pytest
+
 import plumpy
-import asyncio
+from plumpy import process_comms
 
-from plumpy import communications, process_comms
-from . import utils
-
-from kiwipy import rmq
-
+from .. import utils
 
 class Process(plumpy.Process):
 

@@ -1,48 +1,27 @@
 import pytest
-
 import shortuuid
 
-import kiwipy
 from kiwipy import rmq
+from plumpy import process_comms
 
-from . import utils
-
-try:
-    import aio_pika
-    from async_generator import yield_, async_generator
-
-    # pylint: disable=redefined-outer-name
-
-    @pytest.fixture
-    @async_generator
-    async def connection():
-        conn = await aio_pika.connect_robust('amqp://guest:guest@localhost:5672/')
-        await yield_(conn)
-        await conn.close()
-
-    @pytest.fixture
-    @async_generator
-    async def communicator(connection):
-        communicator = await new_communicator(connection)
-        await yield_(communicator)
-        await communicator.disconnect()
-
-except ImportError:
-    pass
-
-
-async def new_communicator(connection, settings=None) -> kiwipy.rmq.RmqCommunicator:
-    settings = settings or {}
-
+@pytest.yield_fixture
+def communicator() -> rmq.RmqThreadCommunicator:
     message_exchange = '{}.{}'.format(__file__, shortuuid.uuid())
     task_exchange = '{}.{}'.format(__file__, shortuuid.uuid())
-    task_queue = '{}.{}'.format(__file__, shortuuid.uuid())
+    queue_name = '{}.{}.tasks'.format(__file__, shortuuid.uuid())
 
-    communicator = rmq.RmqCommunicator(connection,
-                                       message_exchange=message_exchange,
-                                       task_exchange=task_exchange,
-                                       task_queue=task_queue,
-                                       testing_mode=True,
-                                       **settings)
-    await communicator.connect()
-    return communicator
+    communicator = rmq.connect(connection_params={'url': 'amqp://guest:guest@localhost:5672/'},
+                                        message_exchange=message_exchange,
+                                        task_exchange=task_exchange,
+                                        task_queue=queue_name,
+                                        testing_mode=True)
+    yield communicator
+    communicator.stop()
+
+@pytest.yield_fixture
+def controller(communicator):
+    yield process_comms.RemoteProcessController(communicator)
+
+@pytest.yield_fixture
+def controller_thread(communicator):
+    yield process_comms.RemoteProcessThreadController(communicator)

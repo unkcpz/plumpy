@@ -37,7 +37,6 @@
         test/persistence/test_inmemory.py|
         test/base/test_statemachine.py|
         test/base/test_utils.py|
-        test/test_process_spec.py|
         test/persistence/test_pickle.py|
         test/rmq/conftest.py|
         test/rmq/test_communicator.py|
@@ -47,7 +46,8 @@
         test/test_expose.py|
         test/test_lang.py|
         test/test_port.py|
-        test/test_process_comms.py|
+        test/process/test_process_spec.py|
+        test/process/test_process_comms.py|
         test/test_waiting_process.py|
         test/test_workchains.py|
       )$
