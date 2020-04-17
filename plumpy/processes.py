@@ -52,6 +52,7 @@ class BundleKeys(object):
 
 
 _process_stack = ContextVar('process stack', default=[])  # pylint: disable=invalid-name
+_process_stack_str = ContextVar('process stack_str', default='')  # pylint: disable=invalid-name
 
 
 class ProcessStateMachineMeta(abc.ABCMeta, state_machine.StateMachineMeta):
@@ -465,7 +466,11 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         meaning that globally someone can ask for Process.current() to get the last process
         that is on the call stack.
         """
-        _process_stack.get().append(self)
+        # _process_stack.get().append(self)
+        l = _process_stack.get()
+        l_copy = l.copy()
+        l_copy.append(self)
+        _process_stack.set(l_copy)
         try:
             yield
         finally:
@@ -473,6 +478,14 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
                 'Somehow, the process at the top of the stack is not me, ' \
                 'but another process! ({} != {})'.format(self, Process.current())
             _process_stack.get().pop()
+
+    # @classmethod
+    # def stack_return(cls):
+    #     return _process_stack.get()
+    #
+    # @classmethod
+    # def stack_return_str(cls):
+    #     return _process_stack_str.get()
 
     async def _run_task(self, callback, *args, **kwargs):
         """

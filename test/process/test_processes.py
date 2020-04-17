@@ -587,21 +587,27 @@ def test_execute_twice():
         proc.execute()
 
 
-@plumpy.auto_persist('steps_ran')
-class SavePauseProc(plumpy.Process):
-    steps_ran = None
+@pytest.mark.asyncio
+async def test_process_scope():
 
-    def init(self):
-        super(SavePauseProc, self).init()
-        self.steps_ran = []
+    class ProcessTaskInterleave(plumpy.Process):
 
-    def run(self):
-        self.pause()
-        self.steps_ran.append(self.run.__name__)
-        return plumpy.Continue(self.step2)
+        async def task(self, steps: list):
+            steps.append('[{}] started'.format(self.pid))
+            assert plumpy.Process.current() is self
+            steps.append('[{}] sleeping'.format(self.pid))
+            await asyncio.sleep(0.1)
+            assert plumpy.Process.current() is self
+            steps.append('[{}] finishing'.format(self.pid))
 
-    def step2(self):
-        self.steps_ran.append(self.step2.__name__)
+    p1 = ProcessTaskInterleave()
+    p2 = ProcessTaskInterleave()
+
+    p1steps = []
+    p2steps = []
+    p1task = asyncio.create_task(p1._run_task(p1.task, p1steps))
+    p2task = asyncio.create_task(p2._run_task(p2.task, p2steps))
+    await p1task, p2task
 
 
 class TestProcessNamespace(unittest.TestCase):
