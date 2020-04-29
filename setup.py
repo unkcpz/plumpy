@@ -32,6 +32,8 @@ setup(
         'tornado>=4.1, <5.0',
         'pyyaml~=5.1.2',
         'pika>=1.0.0',
+        'aio-pika',
+        'aiocontextvars',
         'kiwipy[rmq]>=0.5.2',
     ],
     extras_require={

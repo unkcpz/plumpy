@@ -2,7 +2,6 @@
 from plumpy.ports import PortNamespace
 from plumpy.processes import Process
 from plumpy.process_spec import ProcessSpec
-from test.test_utils import NewLoopProcess
 from test import utils
 
 
@@ -14,7 +13,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         def validator_function(input, port):
             pass
 
-        class BaseNamespaceProcess(NewLoopProcess):
+        class BaseNamespaceProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -25,7 +24,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
                 spec.inputs['namespace'].valid_type = (int, float)
                 spec.inputs['namespace'].validator = validator_function
 
-        class BaseProcess(NewLoopProcess):
+        class BaseProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -35,7 +34,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
                 spec.inputs.dynamic = True
                 spec.inputs.valid_type = str
 
-        class ExposeProcess(NewLoopProcess):
+        class ExposeProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -128,7 +127,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         """Test that the exclude argument of exposed_inputs works correctly and excludes ports from being absorbed."""
         BaseProcess = self.BaseProcess
 
-        class ExcludeProcess(NewLoopProcess):
+        class ExcludeProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -146,7 +145,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         """Test that the include argument of exposed_inputs works correctly and includes only specified ports."""
         BaseProcess = self.BaseProcess
 
-        class ExcludeProcess(NewLoopProcess):
+        class ExcludeProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -164,7 +163,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         """Test that passing both exclude and include raises."""
         BaseProcess = self.BaseProcess
 
-        class ExcludeProcess(NewLoopProcess):
+        class ExcludeProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -351,7 +350,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         """Test the include rules can be nested and are properly unwrapped."""
         BaseNamespaceProcess = self.BaseNamespaceProcess
 
-        class ExposeProcess(NewLoopProcess):
+        class ExposeProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -365,7 +364,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         """Test the include rules can be nested and are properly unwrapped."""
         BaseNamespaceProcess = self.BaseNamespaceProcess
 
-        class ExposeProcess(NewLoopProcess):
+        class ExposeProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -381,7 +380,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         """Test the include rules can be nested and are properly unwrapped."""
         BaseNamespaceProcess = self.BaseNamespaceProcess
 
-        class ExposeProcess(NewLoopProcess):
+        class ExposeProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -397,7 +396,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         """Test the include rules can be nested and are properly unwrapped."""
         BaseNamespaceProcess = self.BaseNamespaceProcess
 
-        class ExposeProcess(NewLoopProcess):
+        class ExposeProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -413,7 +412,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         """Test the exclude rules can be nested and are properly unwrapped."""
         BaseNamespaceProcess = self.BaseNamespaceProcess
 
-        class ExposeProcess(NewLoopProcess):
+        class ExposeProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -429,7 +428,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         """Test the exclude rules can be nested and are properly unwrapped."""
         BaseNamespaceProcess = self.BaseNamespaceProcess
 
-        class ExposeProcess(NewLoopProcess):
+        class ExposeProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -443,7 +442,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         """Test the exclude rules can be nested and are properly unwrapped."""
         BaseNamespaceProcess = self.BaseNamespaceProcess
 
-        class ExposeProcess(NewLoopProcess):
+        class ExposeProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
@@ -459,7 +458,7 @@ class TestExposeProcess(utils.TestCaseWithLoop):
         """Test the exclude rules can be nested and are properly unwrapped."""
         BaseNamespaceProcess = self.BaseNamespaceProcess
 
-        class ExposeProcess(NewLoopProcess):
+        class ExposeProcess(utils.NewLoopProcess):
 
             @classmethod
             def define(cls, spec):
