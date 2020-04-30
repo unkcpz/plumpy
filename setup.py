@@ -37,7 +37,7 @@ setup(
         'kiwipy[rmq]>=0.5.2',
     ],
     extras_require={
-        'dev': ['pytest~=5.4', 'pre-commit~=1.20', 'prospector~=1.2', 'yapf~=0.29', 'shortuuid'],
+        'dev': ['pytest~=5.4', 'pytest-asyncio', 'pre-commit~=1.20', 'prospector~=1.2', 'yapf~=0.29', 'shortuuid'],
         'docs': [
             'Sphinx==1.8.4',
             'Pygments==2.3.1',
