@@ -3,13 +3,11 @@
 Module containing future related methods and classes
 """
 import asyncio
-import concurrent
-import inspect
+from concurrent import futures
 
 import kiwipy
 import tornado
-
-import plumpy
+from tornado import concurrent, ioloop, gen
 
 __all__ = ['Future', 'gather', 'chain', 'copy_future', 'CancelledError', 'create_task']
 
@@ -25,7 +23,7 @@ chain = kiwipy.chain  # pylint: disable=invalid-name
 gather = lambda *args: tornado.gen.multi(args)  # pylint: disable=invalid-name
 
 
-class Future(concurrent.futures.Future):
+class Future(futures.Future):
     """Just a concurrent Future that can be awaited in an event loop"""
 
     def __await__(self):
@@ -67,27 +65,21 @@ def create_task(coro, loop=None):
     """
     Schedule a call to a coroutine in the event loop and wrap the outcome
     in a future.
-
     :param coro: the coroutine to schedule
     :param loop: the event loop to schedule it in
     :return: the future representing the outcome of the coroutine
-    :rtype: :class:`concurrent.futures.Future`
+    :rtype: :class:`tornado.concurrent.Future`
     """
-    future = plumpy.Future()
+    loop = loop or ioloop.IOLoop.current()
 
-    async def run_task():
-        print('inside run_task')
-        print((id(asyncio.get_event_loop())))
+    future = concurrent.Future()
+
+    @gen.coroutine
+    def run_task():
         with kiwipy.capture_exceptions(future):
-            res = coro()
-            if inspect.isawaitable(res):
-                future.set_result(await res)
-            else:
-                future.set_result(res)
+            future.set_result((yield coro()))
 
-    # function create_task is called in kiwipy's thread
-    # but we want it awaited in event loop of plumpy's LoopCommunicator
-    asyncio.run_coroutine_threadsafe(run_task(), loop)
+    loop.add_callback(run_task)
     return future
 
 
@@ -98,7 +90,6 @@ def unwrap_kiwi_future(future):
     future will not resolve to a value until the final chain of futures is not a future
     but a concrete value.  If at any point in the chain a future resolves to an exception
     then the returned future will also resolve to that exception.
-
     :param future: the future to unwrap
     :type future: :class:`kiwipy.Future`
     :return: the unwrapping future

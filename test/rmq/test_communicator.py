@@ -1,19 +1,24 @@
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
 from functools import partial
 import shutil
 import tempfile
 import unittest
 import uuid
 import shortuuid
-import pytest
-import asyncio
 
 from kiwipy import rmq
+from six.moves import range
 from tornado import testing, ioloop
 
-import plumpy
-from plumpy import communications, process_comms
-from test.utils import AsyncTestCase
+import plumpy.test_utils
+from plumpy import communications, process_comms, test_utils
+from ..utils import AsyncTestCase
+
+try:
+    import aio_pika
+except ImportError:
+    aio_pika = None
 
 AWAIT_TIMEOUT = testing.get_async_test_timeout()
 
@@ -23,7 +28,7 @@ AWAIT_TIMEOUT = testing.get_async_test_timeout()
 class CommunicatorTestCase(unittest.TestCase):
 
     def setUp(self):
-        super().setUp()
+        super(CommunicatorTestCase, self).setUp()
         message_exchange = '{}.{}'.format(self.__class__.__name__, shortuuid.uuid())
         task_exchange = '{}.{}'.format(self.__class__.__name__, shortuuid.uuid())
         queue_name = '{}.{}.tasks'.format(self.__class__.__name__, shortuuid.uuid())
@@ -35,33 +40,25 @@ class CommunicatorTestCase(unittest.TestCase):
             task_queue=queue_name,
             testing_mode=True
         )
-        self.loop = asyncio.get_event_loop()
-        self.communicator = communications.LoopCommunicator(self.rmq_communicator, loop=self.loop, testing_mode=True)
+        self.communicator = communications.LoopCommunicator(self.rmq_communicator, self.loop)
 
     def tearDown(self):
         # Close the connector before calling super because it will close the loop
         self.rmq_communicator.stop()
-        super().tearDown()
+        super(CommunicatorTestCase, self).tearDown()
 
 
+@unittest.skipIf(not aio_pika, 'Requires pika library and RabbitMQ')
 class TestLoopCommunicator(CommunicatorTestCase):
     """Make sure the loop communicator is working as expected"""
 
-    def setUp(self):
-        super().setUp()
-
-    def tearDown(self):
-        # Close the connector before calling super because it will close the loop
-        self.rmq_communicator.stop()
-        super().tearDown()
-
-    @pytest.mark.asyncio
-    async def test_broadcast(self):
+    @testing.gen_test
+    def test_broadcast(self):
         BROADCAST = {'body': 'present', 'sender': 'Martin', 'subject': 'sup', 'correlation_id': 420}
         broadcast_future = plumpy.Future()
 
         def get_broadcast(_comm, body, sender, subject, correlation_id):
-            self.assertEqual(self.loop, asyncio.get_event_loop())
+            self.assertEqual(self.loop, ioloop.IOLoop.current())
             broadcast_future.set_result({
                 'body': body,
                 'sender': sender,
@@ -72,103 +69,104 @@ class TestLoopCommunicator(CommunicatorTestCase):
         self.communicator.add_broadcast_subscriber(get_broadcast)
         self.communicator.broadcast_send(**BROADCAST)
 
-        result = await broadcast_future
+        result = yield broadcast_future
         self.assertDictEqual(BROADCAST, result)
 
-    @pytest.mark.asyncio
-    async def test_rpc(self):
+    @testing.gen_test
+    def test_rpc(self):
         MSG = 'rpc this'
         rpc_future = plumpy.Future()
 
         def get_rpc(_comm, msg):
-            self.assertEqual(self.loop, asyncio.get_event_loop())
+            self.assertEqual(self.loop, ioloop.IOLoop.current())
             rpc_future.set_result(msg)
 
         self.communicator.add_rpc_subscriber(get_rpc, 'rpc')
         self.communicator.rpc_send('rpc', MSG)
 
-        result = await rpc_future
+        result = yield rpc_future
         self.assertEqual(MSG, result)
 
-    @pytest.mark.asyncio
-    async def test_task(self):
+    @testing.gen_test
+    def test_task(self):
         TASK = 'task this'
         task_future = plumpy.Future()
 
         def get_task(_comm, msg):
-            self.assertEqual(self.loop, asyncio.get_event_loop())
+            self.assertEqual(self.loop, ioloop.IOLoop.current())
             task_future.set_result(msg)
 
         self.communicator.add_task_subscriber(get_task)
         self.communicator.task_send(TASK)
 
-        result = await task_future
+        result = yield task_future
         self.assertEqual(TASK, result)
 
 
+@unittest.skipIf(not pika, 'Requires pika library and RabbitMQ')
 class TestTaskActions(CommunicatorTestCase):
 
     def setUp(self):
-        super().setUp()
+        super(TestTaskActions, self).setUp()
         self._tmppath = tempfile.mkdtemp()
         self.persister = plumpy.PicklePersister(self._tmppath)
-
         # Add the process launcher
-        self.communicator.add_task_subscriber(plumpy.ProcessLauncher(persister=self.persister))
+        self.communicator.add_task_subscriber(plumpy.ProcessLauncher(self.loop, persister=self.persister))
+
         self.process_controller = process_comms.RemoteProcessController(self.communicator)
 
     def tearDown(self):
         # Close the connector before calling super because it will
-        super().tearDown()
+        super(TestTaskActions, self).tearDown()
         shutil.rmtree(self._tmppath)
 
-    @pytest.mark.asyncio
-    async def test_launch(self):
+    @testing.gen_test
+    def test_launch(self):
         # Let the process run to the end
-        result = await self.process_controller.launch_process(utils.DummyProcess)
+        result = yield self.process_controller.launch_process(test_utils.DummyProcess)
         # Check that we got a result
-        self.assertDictEqual(utils.DummyProcess.EXPECTED_OUTPUTS, result)
+        self.assertDictEqual(test_utils.DummyProcess.EXPECTED_OUTPUTS, result)
 
-    @pytest.mark.asyncio
-    async def test_launch_nowait(self):
+    @testing.gen_test
+    def test_launch_nowait(self):
         """ Testing launching but don't wait, just get the pid """
-        pid = await self.process_controller.launch_process(utils.DummyProcess, nowait=True)
+        pid = yield self.process_controller.launch_process(test_utils.DummyProcess, nowait=True)
         self.assertIsInstance(pid, uuid.UUID)
 
-    @pytest.mark.asyncio
-    async def test_execute_action(self):
+    @testing.gen_test
+    def test_execute_action(self):
         """ Test the process execute action """
-        result = await self.process_controller.execute_process(utils.DummyProcessWithOutput)
-        self.assertEqual(utils.DummyProcessWithOutput.EXPECTED_OUTPUTS, result)
+        result = yield self.process_controller.execute_process(test_utils.DummyProcessWithOutput)
+        self.assertEqual(test_utils.DummyProcessWithOutput.EXPECTED_OUTPUTS, result)
 
-    @pytest.mark.asyncio
-    async def test_execute_action_nowait(self):
+    @testing.gen_test
+    def test_execute_action_nowait(self):
         """ Test the process execute action """
-        pid = await self.process_controller.execute_process(utils.DummyProcessWithOutput, nowait=True)
+        pid = yield self.process_controller.execute_process(test_utils.DummyProcessWithOutput, nowait=True)
         self.assertIsInstance(pid, uuid.UUID)
 
-    @pytest.mark.asyncio
-    async def test_launch_many(self):
+    @testing.gen_test
+    def test_launch_many(self):
         """Test launching multiple processes"""
         num_to_launch = 10
 
         launch_futures = []
         for _ in range(num_to_launch):
-            launch = self.process_controller.launch_process(utils.DummyProcess, nowait=True)
+            launch = self.process_controller.launch_process(test_utils.DummyProcess, nowait=True)
             launch_futures.append(launch)
 
-        results = await asyncio.gather(*launch_futures)
+        results = yield launch_futures
         for result in results:
             self.assertIsInstance(result, uuid.UUID)
 
-    @pytest.mark.asyncio
-    async def test_continue(self):
+    @testing.gen_test
+    def test_continue(self):
         """ Test continuing a saved process """
-        process = utils.DummyProcessWithOutput()
+        process = test_utils.DummyProcessWithOutput()
         self.persister.save_checkpoint(process)
         pid = process.pid
         del process
 
         # Let the process run to the end
-        result = await self.process_controller.continue_process(pid)
-        self.assertEqual(result, utils.DummyProcessWithOutput.EXPECTED_OUTPUTS)
+        result = yield self.process_controller.continue_process(pid)
+        self.assertEqual(result, test_utils.DummyProcessWithOutput.EXPECTED_OUTPUTS)

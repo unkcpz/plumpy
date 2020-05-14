@@ -143,7 +143,8 @@ class RemoteProcessController:
         :param pid: the process id
         :return: the status response from the process
         """
-        result = await self._communicator.rpc_send(pid, STATUS_MSG)
+        future = self._communicator.rpc_send(pid, STATUS_MSG)
+        result = await asyncio.wrap_future(future)
         return result
 
     async def pause_process(self, pid, msg=None):
@@ -158,8 +159,9 @@ class RemoteProcessController:
         if msg is not None:
             message[MESSAGE_KEY] = msg
 
-        pause_future = await self._communicator.rpc_send(pid, message)
-        result = await pause_future
+        pause_future = self._communicator.rpc_send(pid, message)
+        future = await asyncio.wrap_future(pause_future)
+        result = await asyncio.wrap_future(future)
         return result
 
     async def play_process(self, pid):
@@ -169,8 +171,9 @@ class RemoteProcessController:
         :param pid: the pid of the process to play
         :return: True if played, False otherwise
         """
-        play_future = await self._communicator.rpc_send(pid, PLAY_MSG)
-        result = await play_future
+        play_future = self._communicator.rpc_send(pid, PLAY_MSG)
+        future = await asyncio.wrap_future(play_future)
+        result = await asyncio.wrap_future(future)
         return result
 
     async def kill_process(self, pid, msg=None):
@@ -186,9 +189,10 @@ class RemoteProcessController:
             message[MESSAGE_KEY] = msg
 
         # Wait for the communication to go through
-        kill_future = await self._communicator.rpc_send(pid, message)
+        kill_future = self._communicator.rpc_send(pid, message)
+        future = await asyncio.wrap_future(kill_future)
         # Now wait for the kill to be enacted
-        result = await kill_future
+        result = await asyncio.wrap_future(future)
 
         return result
 
