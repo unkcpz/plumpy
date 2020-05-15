@@ -14,8 +14,9 @@ from six.moves import range
 from tornado import testing, ioloop
 
 import plumpy
-from plumpy import communications, process_comms, utils
+from plumpy import communications, process_comms
 from ..utils import AsyncTestCase
+from .. import utils
 
 try:
     import aio_pika
@@ -123,53 +124,53 @@ class TestTaskActions(CommunicatorTestCase):
         super(TestTaskActions, self).tearDown()
         shutil.rmtree(self._tmppath)
 
-    @testing.gen_test
-    def test_launch(self):
+    @pytest.mark.asyncio
+    async def test_launch(self):
         # Let the process run to the end
-        result = yield self.process_controller.launch_process(test_utils.DummyProcess)
+        result = await self.process_controller.launch_process(utils.DummyProcess)
         # Check that we got a result
-        self.assertDictEqual(test_utils.DummyProcess.EXPECTED_OUTPUTS, result)
+        self.assertDictEqual(utils.DummyProcess.EXPECTED_OUTPUTS, result)
 
-    @testing.gen_test
-    def test_launch_nowait(self):
+    @pytest.mark.asyncio
+    async def test_launch_nowait(self):
         """ Testing launching but don't wait, just get the pid """
-        pid = yield self.process_controller.launch_process(test_utils.DummyProcess, nowait=True)
+        pid = await self.process_controller.launch_process(utils.DummyProcess, nowait=True)
         self.assertIsInstance(pid, uuid.UUID)
 
-    @testing.gen_test
-    def test_execute_action(self):
+    @pytest.mark.asyncio
+    async def test_execute_action(self):
         """ Test the process execute action """
-        result = yield self.process_controller.execute_process(test_utils.DummyProcessWithOutput)
-        self.assertEqual(test_utils.DummyProcessWithOutput.EXPECTED_OUTPUTS, result)
+        result = await self.process_controller.execute_process(utils.DummyProcessWithOutput)
+        self.assertEqual(utils.DummyProcessWithOutput.EXPECTED_OUTPUTS, result)
 
-    @testing.gen_test
-    def test_execute_action_nowait(self):
+    @pytest.mark.asyncio
+    async def test_execute_action_nowait(self):
         """ Test the process execute action """
-        pid = yield self.process_controller.execute_process(test_utils.DummyProcessWithOutput, nowait=True)
+        pid = await self.process_controller.execute_process(utils.DummyProcessWithOutput, nowait=True)
         self.assertIsInstance(pid, uuid.UUID)
 
-    @testing.gen_test
-    def test_launch_many(self):
+    @pytest.mark.asyncio
+    async def test_launch_many(self):
         """Test launching multiple processes"""
         num_to_launch = 10
 
         launch_futures = []
         for _ in range(num_to_launch):
-            launch = self.process_controller.launch_process(test_utils.DummyProcess, nowait=True)
+            launch = self.process_controller.launch_process(utils.DummyProcess, nowait=True)
             launch_futures.append(launch)
 
-        results = yield launch_futures
+        results = await asyncio.gather(*launch_futures)
         for result in results:
             self.assertIsInstance(result, uuid.UUID)
 
-    @testing.gen_test
-    def test_continue(self):
+    @pytest.mark.asyncio
+    async def test_continue(self):
         """ Test continuing a saved process """
-        process = test_utils.DummyProcessWithOutput()
+        process = utils.DummyProcessWithOutput()
         self.persister.save_checkpoint(process)
         pid = process.pid
         del process
 
         # Let the process run to the end
-        result = yield self.process_controller.continue_process(pid)
-        self.assertEqual(result, test_utils.DummyProcessWithOutput.EXPECTED_OUTPUTS)
+        result = await self.process_controller.continue_process(pid)
+        self.assertEqual(result, utils.DummyProcessWithOutput.EXPECTED_OUTPUTS)
