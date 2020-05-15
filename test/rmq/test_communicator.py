@@ -5,14 +5,16 @@ import shutil
 import tempfile
 import unittest
 import uuid
+import asyncio
 import shortuuid
 
+import pytest
 from kiwipy import rmq
 from six.moves import range
 from tornado import testing, ioloop
 
-import plumpy.test_utils
-from plumpy import communications, process_comms, test_utils
+import plumpy
+from plumpy import communications, process_comms, utils
 from ..utils import AsyncTestCase
 
 try:
@@ -40,6 +42,7 @@ class CommunicatorTestCase(unittest.TestCase):
             task_queue=queue_name,
             testing_mode=True
         )
+        self.loop = asyncio.get_event_loop()
         self.communicator = communications.LoopCommunicator(self.rmq_communicator, self.loop)
 
     def tearDown(self):
@@ -52,13 +55,13 @@ class CommunicatorTestCase(unittest.TestCase):
 class TestLoopCommunicator(CommunicatorTestCase):
     """Make sure the loop communicator is working as expected"""
 
-    @testing.gen_test
-    def test_broadcast(self):
+    @pytest.mark.asyncio
+    async def test_broadcast(self):
         BROADCAST = {'body': 'present', 'sender': 'Martin', 'subject': 'sup', 'correlation_id': 420}
         broadcast_future = plumpy.Future()
 
         def get_broadcast(_comm, body, sender, subject, correlation_id):
-            self.assertEqual(self.loop, ioloop.IOLoop.current())
+            self.assertEqual(self.loop, asyncio.get_event_loop())
             broadcast_future.set_result({
                 'body': body,
                 'sender': sender,
@@ -69,41 +72,41 @@ class TestLoopCommunicator(CommunicatorTestCase):
         self.communicator.add_broadcast_subscriber(get_broadcast)
         self.communicator.broadcast_send(**BROADCAST)
 
-        result = yield broadcast_future
+        result = await broadcast_future
         self.assertDictEqual(BROADCAST, result)
 
-    @testing.gen_test
-    def test_rpc(self):
+    @pytest.mark.asyncio
+    async def test_rpc(self):
         MSG = 'rpc this'
         rpc_future = plumpy.Future()
 
         def get_rpc(_comm, msg):
-            self.assertEqual(self.loop, ioloop.IOLoop.current())
+            self.assertEqual(self.loop, asyncio.get_event_loop())
             rpc_future.set_result(msg)
 
         self.communicator.add_rpc_subscriber(get_rpc, 'rpc')
         self.communicator.rpc_send('rpc', MSG)
 
-        result = yield rpc_future
+        result = await rpc_future
         self.assertEqual(MSG, result)
 
-    @testing.gen_test
-    def test_task(self):
+    @pytest.mark.asyncio
+    async def test_task(self):
         TASK = 'task this'
         task_future = plumpy.Future()
 
         def get_task(_comm, msg):
-            self.assertEqual(self.loop, ioloop.IOLoop.current())
+            self.assertEqual(self.loop, asyncio.get_event_loop())
             task_future.set_result(msg)
 
         self.communicator.add_task_subscriber(get_task)
         self.communicator.task_send(TASK)
 
-        result = yield task_future
+        result = await task_future
         self.assertEqual(TASK, result)
 
 
-@unittest.skipIf(not pika, 'Requires pika library and RabbitMQ')
+@unittest.skipIf(not aio_pika, 'Requires pika library and RabbitMQ')
 class TestTaskActions(CommunicatorTestCase):
 
     def setUp(self):

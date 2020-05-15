@@ -7,7 +7,8 @@ from concurrent import futures
 
 import kiwipy
 import tornado
-from tornado import concurrent, ioloop, gen
+
+import plumpy
 
 __all__ = ['Future', 'gather', 'chain', 'copy_future', 'CancelledError', 'create_task']
 
@@ -70,16 +71,15 @@ def create_task(coro, loop=None):
     :return: the future representing the outcome of the coroutine
     :rtype: :class:`tornado.concurrent.Future`
     """
-    loop = loop or ioloop.IOLoop.current()
+    loop = loop or asyncio.get_event_loop()
 
-    future = concurrent.Future()
+    future = plumpy.Future()
 
-    @gen.coroutine
-    def run_task():
+    async def run_task():
         with kiwipy.capture_exceptions(future):
-            future.set_result((yield coro()))
+            future.set_result((await coro()))
 
-    loop.add_callback(run_task)
+    asyncio.run_coroutine_threadsafe(run_task(), loop)
     return future
 
 

@@ -843,7 +843,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
                 kiwi_future.set_result(result)
 
         # Schedule the task and give back a kiwi future
-        self.loop().create_task(run_callback())
+        asyncio.run_coroutine_threadsafe(run_callback(), self.loop())
 
         return kiwi_future
 
