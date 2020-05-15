@@ -21,7 +21,6 @@ def call_with_super_check(wrapped, *args, **kwargs):
     """
     Call a class method checking that all subclasses called super along the way
     """
-    # pylint: disable=protected-access
     self = wrapped.__self__
     call_count = getattr(self, '_called', 0)
     self._called = call_count + 1
