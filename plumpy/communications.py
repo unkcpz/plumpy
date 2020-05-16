@@ -5,6 +5,7 @@ import functools
 
 import kiwipy
 
+import plumpy
 from . import futures
 
 __all__ = [
@@ -35,7 +36,7 @@ def plum_to_kiwi_future(plum_future):
             else:
                 result = plum_future.result()
                 # Did we get another future?  In which case convert it too
-                if asyncio.isfuture(result):
+                if isinstance(result, plumpy.Future):
                     result = plum_to_kiwi_future(result)
                 kiwi_future.set_result(result)
 
