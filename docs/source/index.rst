@@ -37,6 +37,7 @@ Features:
    basic/concepts
    basic/process
    basic/workchain
+   basic/controller
 
 .. toctree::
    :caption: Advanced
@@ -44,9 +45,7 @@ Features:
 
    advanced/process
    advanced/workchain
-   advanced/plumpyAPIprocess
-   advanced/plumpyAPIworkchain
-   advanced/plumpyAPIfsm
+   advanced/plumpyAPI
    apidoc/plumpy
 
 Indices and tables
