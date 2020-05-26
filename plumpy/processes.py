@@ -1050,7 +1050,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         call_with_super_check(self.on_playing)
         return True
 
-    @event(from_states=(process_states.Running, process_states.Waiting))
+    @event(from_states=(process_states.Waiting))
     def resume(self, *args):
         """Start running the process again"""
         return self._state.resume(*args)
