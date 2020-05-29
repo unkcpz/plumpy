@@ -113,13 +113,13 @@ class LoopCommunicator(kiwipy.Communicator):
     def remove_rpc_subscriber(self, identifier):
         self._communicator.remove_rpc_subscriber(identifier)
 
-    def add_task_subscriber(self, subscriber, identifier=None):
+    def add_task_subscriber(self, subscriber):
         converted = convert_to_comm(subscriber, self._loop)
-        self._communicator.add_task_subscriber(converted, identifier)
+        self._communicator.add_task_subscriber(converted)
         self._subscribers[subscriber] = converted
 
-    def remove_task_subscriber(self, identifier):
-        self._communicator.remove_task_subscriber(self._subscribers.pop(identifier))
+    def remove_task_subscriber(self, subscriber):
+        self._communicator.remove_task_subscriber(self._subscribers.pop(subscriber))
 
     def add_broadcast_subscriber(self, subscriber, identifier=None):
         converted = convert_to_comm(subscriber, self._loop)
