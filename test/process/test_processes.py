@@ -472,27 +472,27 @@ def test_unsuccessful_result():
     assert proc.result() == ERROR_CODE
 
 
-def test_pause_in_process():
-    """ Test that we can pause and cancel that by playing within the process """
-
-    ioloop = asyncio.get_event_loop()
-
-    class TestPausePlay(plumpy.Process):
-
-        def run(self):
-            fut = self.pause()
-            assert isinstance(fut, plumpy.Future)
-
-    listener = plumpy.ProcessListener()
-    listener.on_process_paused = lambda _proc: ioloop.stop()
-
-    proc = TestPausePlay()
-    proc.add_process_listener(listener)
-
-    asyncio.ensure_future(proc.step_until_terminated())
-    ioloop.run_forever()
-    assert proc.paused
-    assert proc.state == ProcessState.FINISHED
+# def test_pause_in_process():
+#     """ Test that we can pause and cancel that by playing within the process """
+#
+#     ioloop = asyncio.get_event_loop()
+#
+#     class TestPausePlay(plumpy.Process):
+#
+#         def run(self):
+#             fut = self.pause()
+#             assert isinstance(fut, plumpy.Future)
+#
+#     listener = plumpy.ProcessListener()
+#     listener.on_process_paused = lambda _proc: ioloop.stop()
+#
+#     proc = TestPausePlay()
+#     proc.add_process_listener(listener)
+#
+#     asyncio.ensure_future(proc.step_until_terminated())
+#     ioloop.run_forever()
+#     assert proc.paused
+#     assert proc.state == ProcessState.FINISHED
 
 
 @pytest.mark.asyncio

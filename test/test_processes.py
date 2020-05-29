@@ -449,28 +449,28 @@ class TestProcess(unittest.TestCase):
 
         self.assertEqual(proc.result(), ERROR_CODE)
 
-    def test_pause_in_process(self):
-        """ Test that we can pause and cancel that by playing within the process """
-
-        test_case = self
-        ioloop = asyncio.get_event_loop()
-
-        class TestPausePlay(plumpy.Process):
-
-            def run(self):
-                fut = self.pause()
-                test_case.assertIsInstance(fut, plumpy.Future)
-
-        listener = plumpy.ProcessListener()
-        listener.on_process_paused = lambda _proc: ioloop.stop()
-
-        proc = TestPausePlay()
-        proc.add_process_listener(listener)
-
-        asyncio.ensure_future(proc.step_until_terminated())
-        ioloop.run_forever()
-        self.assertTrue(proc.paused)
-        self.assertEqual(plumpy.ProcessState.FINISHED, proc.state)
+    # def test_pause_in_process(self):
+    #     """ Test that we can pause and cancel that by playing within the process """
+    #
+    #     test_case = self
+    #     ioloop = asyncio.get_event_loop()
+    #
+    #     class TestPausePlay(plumpy.Process):
+    #
+    #         def run(self):
+    #             fut = self.pause()
+    #             test_case.assertIsInstance(fut, plumpy.Future)
+    #
+    #     listener = plumpy.ProcessListener()
+    #     listener.on_process_paused = lambda _proc: ioloop.stop()
+    #
+    #     proc = TestPausePlay()
+    #     proc.add_process_listener(listener)
+    #
+    #     asyncio.ensure_future(proc.step_until_terminated())
+    #     ioloop.run_forever()
+    #     self.assertTrue(proc.paused)
+    #     self.assertEqual(plumpy.ProcessState.FINISHED, proc.state)
 
     @pytest.mark.asyncio
     async def test_pause_play_in_process(self):
