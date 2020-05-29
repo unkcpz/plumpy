@@ -22,7 +22,7 @@ class DummyProcessWithOutput(plumpy.Process):
 
 
 def main():
-    with kiwipy.connect('amqp://127.0.0.1') as comm:
+    with kiwipy.rmq.connect('amqp://127.0.0.1') as comm:
         loop = asyncio.get_event_loop()
         persister = plumpy.PicklePersister(tempfile.mkdtemp())
         task_receiver = plumpy.ProcessLauncher(loop=loop, persister=persister)
