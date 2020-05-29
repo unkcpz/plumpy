@@ -29,7 +29,6 @@ setup(
     keywords='workflow multithreaded rabbitmq',
     install_requires=[
         'frozendict',
-        'tornado>=4.1, <5.0',
         'pyyaml~=5.1.2',
         'pika>=1.0.0',
         'aio-pika',

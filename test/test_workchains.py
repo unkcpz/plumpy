@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import inspect
-from tornado import gen
 
 import plumpy
 from plumpy.workchains import *
