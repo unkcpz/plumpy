@@ -31,6 +31,7 @@ setup(
         'frozendict',
         'pyyaml~=5.1.2',
         'pika>=1.0.0',
+        'nest_asyncio',
         'aio-pika',
         'aiocontextvars',
         'kiwipy[rmq]~=0.5.5',
