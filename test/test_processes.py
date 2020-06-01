@@ -504,7 +504,8 @@ class TestProcess(unittest.TestCase):
         proc = StackTest()
         proc.execute()
 
-    def test_process_stack_multiple(self):
+    @pytest.mark.asyncio
+    async def test_process_stack_multiple(self):
         """
         Run multiple and nested processes to make sure the process stack is always correct
         """
@@ -527,19 +528,19 @@ class TestProcess(unittest.TestCase):
 
             def run(self):
                 expect_true.append(self == Process.current())
-                # proc = StackTest()
-                # asyncio.ensure_future(proc.step_until_terminated())
                 StackTest().execute()
 
         to_run = []
-        for _ in range(3):
+        n_run = 3
+        for _ in range(n_run):
             to_run.append(ParentProcess().step_until_terminated())
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(asyncio.gather(*to_run))
+        await asyncio.gather(*to_run)
 
         for res in expect_true:
             assert res
+
+        self.assertEqual(len(expect_true), n_run * 3)
 
     def test_call_soon(self):
 

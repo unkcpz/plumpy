@@ -368,7 +368,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         process = process_class(
             inputs=inputs, pid=pid, logger=logger, loop=self.loop(), communicator=self._communicator
         )
-        asyncio.ensure_future(process.step_until_terminated())
+        self.loop().create_task(process.step_until_terminated())
         return process
 
     # region State introspection methods
@@ -451,7 +451,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         """
         args = (callback,) + args
         handle = events.ProcessCallback(self, self._run_task, args, kwargs)
-        asyncio.ensure_future(handle.run())
+        self.loop().create_task(handle.run())
         return handle
 
     def callback_excepted(self, _callback, exception, trace):
@@ -1049,6 +1049,10 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         :return: None if not terminated, otherwise `self.outputs`
         """
         if not self.has_terminated():
+            if self.loop().is_running():
+                self.loop().create_task(self.step_until_terminated())
+                return
+
             self.loop().run_until_complete(self.step_until_terminated())
 
         return self.future().result()
