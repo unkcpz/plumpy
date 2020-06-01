@@ -542,6 +542,31 @@ class TestProcess(unittest.TestCase):
 
         self.assertEqual(len(expect_true), n_run * 3)
 
+    def test_process_nested(self):
+        """
+        Run multiple and nested processes to make sure the process stack is always correct
+        """
+        expect_true = []
+
+        class StackTest(plumpy.Process):
+
+            def run(self):
+                # TODO: unexpected behaviour here
+                # if assert error happend here not raise
+                # it will be handled by try except clause in process
+                # is there better way to handle this?
+                expect_true.append(self == Process.current())
+                test_nested(self)
+
+        class ParentProcess(plumpy.Process):
+
+            def run(self):
+                expect_true.append(self == Process.current())
+                StackTest().execute()
+
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(ParentProcess().step_until_terminated())
+
     def test_call_soon(self):
 
         class CallSoon(plumpy.Process):

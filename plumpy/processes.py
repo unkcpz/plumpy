@@ -1049,10 +1049,6 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         :return: None if not terminated, otherwise `self.outputs`
         """
         if not self.has_terminated():
-            if self.loop().is_running():
-                self.loop().create_task(self.step_until_terminated())
-                return
-
             self.loop().run_until_complete(self.step_until_terminated())
 
         return self.future().result()
