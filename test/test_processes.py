@@ -556,7 +556,6 @@ class TestProcess(unittest.TestCase):
                 # it will be handled by try except clause in process
                 # is there better way to handle this?
                 expect_true.append(self == Process.current())
-                test_nested(self)
 
         class ParentProcess(plumpy.Process):
 
@@ -564,8 +563,7 @@ class TestProcess(unittest.TestCase):
                 expect_true.append(self == Process.current())
                 StackTest().execute()
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(ParentProcess().step_until_terminated())
+        ParentProcess().execute()
 
     def test_call_soon(self):
 
