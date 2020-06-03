@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """The main Process module"""
 import abc
-import asyncio
 import contextlib
 import functools
 import copy
@@ -9,6 +8,8 @@ import logging
 import time
 import sys
 import uuid
+import asyncio
+from asyncio import events as asyncio_events
 
 from aiocontextvars import ContextVar
 import kiwipy
@@ -1054,6 +1055,10 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         """
         if not self.has_terminated():
             self.loop().run_until_complete(self.step_until_terminated())
+
+            # with nest_asyncio the main loop will not set back, might be a bug.
+            # https://github.com/erdewit/nest_asyncio/pull/25
+            asyncio_events._set_running_loop(None)  # pylint: disable=protected-access
 
         return self.future().result()
 

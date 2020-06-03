@@ -80,24 +80,29 @@ class TestProcess(unittest.TestCase):
         p = Proc()
         self.assertIs(p.spec(), Proc.spec())
 
-    # def test_dynamic_inputs(self):
-    #
-    #     class NoDynamic(Process):
-    #         pass
-    #
-    #     class WithDynamic(Process):
-    #
-    #         @classmethod
-    #         def define(cls, spec):
-    #             super().define(spec)
-    #             spec.inputs.dynamic = True
-    #
-    #     with self.assertRaises(ValueError):
-    #         NoDynamic(inputs={'a': 5}).execute()
-    #
-    #     proc = WithDynamic(inputs={'a': 5})
-    #     proc.execute()
-    #
+    def test_dynamic_inputs(self):
+
+        class NoDynamic(Process):
+            pass
+
+        class WithDynamic(Process):
+
+            @classmethod
+            def define(cls, spec):
+                super().define(spec)
+                spec.inputs.dynamic = True
+
+        with self.assertRaises(ValueError):
+            NoDynamic(inputs={'a': 5}).execute()
+
+        proc = WithDynamic(inputs={'a': 5})
+        print()
+        print('dynamic start: ', id(asyncio.get_event_loop()))
+        proc.execute()
+        print('dynamic stop: ', id(asyncio.get_event_loop()))
+
+        print('proc loop: ', id(proc.loop()))
+
     # def test_inputs(self):
     #
     #     class Proc(Process):
@@ -273,23 +278,24 @@ class TestProcess(unittest.TestCase):
     #     self.assertTrue(proc.killed())
     #     self.assertEqual(proc.killed_msg(), 'Farewell!')
     #     self.assertEqual(proc.state, ProcessState.KILLED)
-    #
-    # def test_wait_continue(self):
-    #     proc = utils.WaitForSignalProcess()
-    #     # Wait - Execute the process and wait until it is waiting
-    #
-    #     listener = plumpy.ProcessListener()
-    #     listener.on_process_waiting = lambda proc: proc.resume()
-    #
-    #     proc.add_process_listener(listener)
-    #
-    #     loop = asyncio.get_event_loop()
-    #     loop.run_until_complete(proc.step_until_terminated())
-    #
-    #     # Check it's done
-    #     self.assertTrue(proc.done())
-    #     self.assertEqual(proc.state, ProcessState.FINISHED)
-    #
+
+    def test_wait_continue(self):
+        proc = utils.WaitForSignalProcess()
+        # Wait - Execute the process and wait until it is waiting
+
+        listener = plumpy.ProcessListener()
+        listener.on_process_waiting = lambda proc: proc.resume()
+
+        proc.add_process_listener(listener)
+
+        print('wati loop: ', id(asyncio.get_event_loop()))
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(proc.step_until_terminated())
+
+        # Check it's done
+        self.assertTrue(proc.done())
+        self.assertEqual(proc.state, ProcessState.FINISHED)
+
     # def test_exc_info(self):
     #     proc = utils.ExceptionProcess()
     #     try:
@@ -301,7 +307,7 @@ class TestProcess(unittest.TestCase):
     #     proc = utils.DummyProcess()
     #     proc.execute()
     #     self.assertTrue(proc.done())
-    #
+
     # @pytest.mark.asyncio
     # async def test_wait_pause_play_resume(self):
     #     """
