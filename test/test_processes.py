@@ -39,6 +39,29 @@ class ForgetToCallParent(plumpy.Process):
             super().on_kill(msg)
 
 
+@pytest.mark.asyncio
+async def test_process_scope():
+
+    class ProcessTaskInterleave(plumpy.Process):
+
+        async def task(self, steps: list):
+            steps.append('[{}] started'.format(self.pid))
+            assert plumpy.Process.current() is self
+            steps.append('[{}] sleeping'.format(self.pid))
+            await asyncio.sleep(0.1)
+            assert plumpy.Process.current() is self
+            steps.append('[{}] finishing'.format(self.pid))
+
+    p1 = ProcessTaskInterleave()
+    p2 = ProcessTaskInterleave()
+
+    p1steps = []
+    p2steps = []
+    p1task = asyncio.ensure_future(p1._run_task(p1.task, p1steps))
+    p2task = asyncio.ensure_future(p2._run_task(p2.task, p2steps))
+    await p1task, p2task
+
+
 class TestProcess(unittest.TestCase):
 
     def test_spec(self):

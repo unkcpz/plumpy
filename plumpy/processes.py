@@ -467,7 +467,9 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         meaning that globally someone can ask for Process.current() to get the last process
         that is on the call stack.
         """
-        PROCESS_STACK.get().append(self)
+        stack_copy = PROCESS_STACK.get().copy()
+        stack_copy.append(self)
+        PROCESS_STACK.set(stack_copy)
         try:
             yield
         finally:
