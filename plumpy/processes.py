@@ -474,10 +474,13 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         try:
             yield
         finally:
-            assert Process.current() is self, \
-                'Somehow, the process at the top of the stack is not me, ' \
-                'but another process! ({} != {})'.format(self, Process.current())
-            PROCESS_STACK.get().pop()
+            # assert Process.current() is self, \
+            #     'Somehow, the process at the top of the stack is not me, ' \
+            #     'but another process! ({} != {})'.format(self, Process.current())
+            # stack_copy = PROCESS_STACK.get().copy()
+            # stack_copy.pop()
+            # PROCESS_STACK.set(stack_copy)
+            pass
 
     async def _run_task(self, callback, *args, **kwargs):
         """
