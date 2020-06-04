@@ -9,7 +9,6 @@ import time
 import sys
 import uuid
 import asyncio
-from asyncio import events as asyncio_events
 
 from aiocontextvars import ContextVar
 import kiwipy
@@ -241,7 +240,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         self.spec().seal()
 
         self._loop = loop if loop is not None else asyncio.new_event_loop()
-        nest_asyncio.apply(self._loop)
+        # nest_asyncio.apply(self._loop)
 
         self._setup_event_hooks()
 
@@ -471,16 +470,19 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         stack_copy = PROCESS_STACK.get().copy()
         stack_copy.append(self)
         PROCESS_STACK.set(stack_copy)
+        # print('before yield: ')
+        # print([self], 'before coro: ', PROCESS_STACK.get())
         try:
             yield
         finally:
-            # assert Process.current() is self, \
-            #     'Somehow, the process at the top of the stack is not me, ' \
-            #     'but another process! ({} != {})'.format(self, Process.current())
-            # stack_copy = PROCESS_STACK.get().copy()
-            # stack_copy.pop()
-            # PROCESS_STACK.set(stack_copy)
-            pass
+            # print('finally:')
+            # print([self], 'after coro: ', PROCESS_STACK.get())
+            assert Process.current() is self, \
+                'Somehow, the process at the top of the stack is not me, ' \
+                'but another process! ({} != {})'.format(self, Process.current())
+            stack_copy = PROCESS_STACK.get().copy()
+            stack_copy.pop()
+            PROCESS_STACK.set(stack_copy)
 
     async def _run_task(self, callback, *args, **kwargs):
         """
@@ -1058,11 +1060,6 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         """
         if not self.has_terminated():
             self.loop().run_until_complete(self.step_until_terminated())
-
-            # with nest_asyncio the main loop will not set back, might be a bug.
-            # https://github.com/erdewit/nest_asyncio/pull/25
-            asyncio_events._set_running_loop(None)  # pylint: disable=protected-access
-
         return self.future().result()
 
     @ensure_not_closed
