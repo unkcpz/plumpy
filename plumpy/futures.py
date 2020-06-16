@@ -3,7 +3,6 @@
 Module containing future related methods and classes
 """
 import asyncio
-from concurrent import futures
 
 import kiwipy
 
@@ -22,12 +21,7 @@ copy_future = kiwipy.copy_future  # pylint: disable=invalid-name
 chain = kiwipy.chain  # pylint: disable=invalid-name
 gather = asyncio.gather  # pylint: disable=invalid-name
 
-
-class Future(futures.Future):
-    """Just a concurrent Future that can be awaited in an event loop"""
-
-    def __await__(self):
-        return asyncio.wrap_future(self).__await__()
+Future = asyncio.Future
 
 
 class CancellableAction(Future):
@@ -72,15 +66,15 @@ def create_task(fct, loop=None):
     """
     loop = loop or asyncio.get_event_loop()
 
-    future = Future()
+    # future = Future()
+    future = loop.create_future()
     coro = utils.ensure_coroutine(fct)
 
     async def run_task():
         with kiwipy.capture_exceptions(future):
-            try:
-                future.set_result(await coro())
-            except Exception:  # pylint: disable=broad-except
-                future.set_result(coro())
+            ### will cause
+            ### RuntimeError: Non-thread-safe operation invoked on an event loop other than the current one
+            future.set_result(await coro())
 
     asyncio.run_coroutine_threadsafe(run_task(), loop)
     return future
