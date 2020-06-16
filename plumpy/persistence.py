@@ -7,6 +7,7 @@ import fnmatch
 import inspect
 import os
 import pickle
+from asyncio import futures as base_futures
 
 import yaml
 
@@ -22,6 +23,11 @@ __all__ = [
 ]
 
 PersistedCheckpoint = collections.namedtuple('PersistedCheckpoint', ['pid', 'tag'])
+
+# pylint: disable=protected-access
+_PENDING = base_futures._PENDING
+_CANCELLED = base_futures._CANCELLED
+_FINISHED = base_futures._FINISHED
 
 
 class Bundle(dict):
@@ -599,15 +605,32 @@ class SavableFuture(futures.Future, Savable):
         if self.done() and self.exception() is not None:
             out_state[self.EXCEPTION] = self.exception()
 
+    def load_members(self, members, saved_state, load_context=None):
+        assert members == {'_state', '_result'}
+
+        state = self._get_value(saved_state, '_state', load_context)
+        if state is _PENDING:
+            self.create_obj()
+
+        if state is _FINISHED:
+            self.create_obj()
+
+            result = self._get_value(saved_state, '_result', load_context)
+
+            try:
+                exception = saved_state[self.EXCEPTION]
+                self.set_exception(exception)
+            except KeyError:
+                self.set_result(result)
+
+        if state is _CANCELLED:
+            self.create_obj()
+            self.cancel()
+
     def load_instance_state(self, saved_state, load_context):
         # pylint: disable=attribute-defined-outside-init
         super().load_instance_state(saved_state, load_context)
-        try:
-            exception = saved_state[self.EXCEPTION]
-            self._exception = exception
-        except KeyError:
-            self._exception = None
 
-        self._log_traceback = False  # Used for Python >= 3.4
-
-        self._callbacks = []
+        if self._callbacks:
+            for callback in self._callbacks:
+                self.remove_done_callback(callback)
