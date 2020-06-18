@@ -77,7 +77,10 @@ def create_task(fct, loop=None):
 
     async def run_task():
         with kiwipy.capture_exceptions(future):
-            future.set_result(await coro())
+            try:
+                future.set_result(await coro())
+            except Exception:  # pylint: disable=broad-except
+                future.set_result(coro())
 
     asyncio.run_coroutine_threadsafe(run_task(), loop)
     return future
