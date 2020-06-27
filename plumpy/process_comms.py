@@ -520,7 +520,13 @@ class ProcessLauncher:
             return proc.pid
 
         await proc.step_until_terminated()
-        return proc.future().result()
+
+        try:
+            result = proc.future().result()
+            return result
+        except Exception:  # pylint: disable=broad-except
+            result = proc.future().exception()
+            return result
 
     async def _continue(self, _communicator, pid, nowait, tag=None):
         """
@@ -544,7 +550,13 @@ class ProcessLauncher:
             return proc.pid
 
         await proc.step_until_terminated()
-        return proc.future().result()
+
+        try:
+            result = proc.future().result()
+            return result
+        except Exception:  # pylint: disable=broad-except
+            result = proc.future().exception()
+            return result
 
     async def _create(self, _communicator, process_class, persist, init_args=None, init_kwargs=None):
         """
