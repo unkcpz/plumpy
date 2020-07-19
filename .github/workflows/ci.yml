@@ -70,7 +70,8 @@ jobs:
 
         strategy:
             matrix:
-                python-version: [3.5, 3.6, 3.7, 3.8]
+                # python-version: [3.5, 3.6, 3.7, 3.8]
+                python-version: [3.5, 3.6, 3.8]
 
         services:
             rabbitmq:
@@ -98,7 +99,6 @@ jobs:
         -   name: Install python dependencies
             run: |
                 pip install -e .[tests]
-                pip install --upgrade git+https://github.com/unkcpz/nest_asyncio.git@master
 
         -   name: Run pytest
             run:
