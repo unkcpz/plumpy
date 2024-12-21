@@ -323,6 +323,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
                 self.add_cleanup(functools.partial(self._coordinator.remove_rpc_subscriber, identifier))
             except concurrent.futures.TimeoutError:
                 self.logger.exception('Process<%s>: failed to register as an RPC subscriber', self.pid)
+            # XXX: handle duplicate subscribing here: see aiida-core test_duplicate_subscriber_identifier.
 
             try:
                 # filter out state change broadcasts
@@ -1032,6 +1033,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
                 except Exception as exc:
                     import traceback
                     import inspect
+
                     # Get traceback as a string
                     tb_str = ''.join(traceback.format_exception(type(exc), exc, exc.__traceback__))
 
@@ -1042,15 +1044,15 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
                         source_file = inspect.getfile(callback)
                         # getsourcelines returns a tuple (list_of_source_lines, starting_line_number)
                         _, start_line = inspect.getsourcelines(callback)
-                        callback_location = f"{source_file}:{start_line}"
+                        callback_location = f'{source_file}:{start_line}'
                     except Exception:
-                        callback_location = "<unknown location>"
+                        callback_location = '<unknown location>'
 
                     # Include the callback name, file/line info, and the full traceback in the message
                     raise RuntimeError(
                         f"Error invoking callback '{callback.__name__}' at {callback_location}.\n"
-                        f"Exception: {type(exc).__name__}: {exc}\n\n"
-                        f"Full Traceback:\n{tb_str}"
+                        f'Exception: {type(exc).__name__}: {exc}\n\n'
+                        f'Full Traceback:\n{tb_str}'
                     ) from exc
                 else:
                     while asyncio.isfuture(result):
