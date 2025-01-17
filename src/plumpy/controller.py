@@ -11,6 +11,8 @@ from plumpy.utils import PID_TYPE
 ProcessResult = Any
 ProcessStatus = Any
 
+__all__ = ('ProcessController',)
+
 
 class ProcessController(Protocol):
     """
