@@ -14,8 +14,6 @@ if TYPE_CHECKING:
     # Broadcast subscribers params: communicator, body, sender, subject, correlation id
     BroadcastSubscriber = Callable[['Coordinator', Any, Any, Any, ID_TYPE], Any]
 
-__all__ = ('Coordinator',)
-
 
 class Coordinator(Protocol):
     # XXX: naming - 'add_message_handler'

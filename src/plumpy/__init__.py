@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# mypy: disable-error-code=name-defined
 __version__ = '0.24.0'
 
 import logging
