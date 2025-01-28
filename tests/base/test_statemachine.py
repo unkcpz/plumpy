@@ -5,6 +5,7 @@ import unittest
 
 from plumpy.base import state_machine
 from plumpy.exceptions import InvalidStateError
+import pytest
 
 # Events
 PLAY = 'Play'
@@ -150,24 +151,24 @@ class CdPlayer(state_machine.StateMachine):
 class TestStateMachine(unittest.TestCase):
     def test_basic(self):
         cd_player = CdPlayer()
-        self.assertEqual(cd_player.state_label, STOPPED)
+        assert cd_player.state_label == STOPPED
 
         cd_player.play('Eminem - The Real Slim Shady')
-        self.assertEqual(cd_player.state_label, PLAYING)
+        assert cd_player.state_label == PLAYING
         time.sleep(1.0)
 
         cd_player.pause()
-        self.assertEqual(cd_player.state_label, PAUSED)
+        assert cd_player.state_label == PAUSED
 
         cd_player.play()
-        self.assertEqual(cd_player.state_label, PLAYING)
+        assert cd_player.state_label == PLAYING
 
-        self.assertEqual(cd_player.play(), False)
+        assert cd_player.play() == False
 
         cd_player.stop()
-        self.assertEqual(cd_player.state_label, STOPPED)
+        assert cd_player.state_label == STOPPED
 
     def test_invalid_event(self):
         cd_player = CdPlayer()
-        with self.assertRaises(AssertionError):
+        with pytest.raises(AssertionError):
             cd_player.play()

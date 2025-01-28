@@ -2,6 +2,7 @@
 import unittest
 
 from plumpy.base import utils
+import pytest
 
 
 class Root:
@@ -28,7 +29,7 @@ class TestSuperCheckMixin(unittest.TestCase):
         DoCall().do()
 
     def test_dont_call(self):
-        with self.assertRaises(AssertionError):
+        with pytest.raises(AssertionError):
             DontCall().do()
 
     def dont_call_middle(self):
@@ -36,9 +37,9 @@ class TestSuperCheckMixin(unittest.TestCase):
             def method(self):
                 super().method()
 
-        with self.assertRaises(AssertionError):
+        with pytest.raises(AssertionError):
             ThirdChild.do()
 
     def test_skip_check_call(self):
-        with self.assertRaises(AssertionError):
+        with pytest.raises(AssertionError):
             DoCall().method()

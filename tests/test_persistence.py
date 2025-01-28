@@ -127,7 +127,7 @@ class TestSavable(unittest.TestCase):
         saved_state1 = savable.save()
         loaded = savable.recreate_from(saved_state1)
         saved_state2 = loaded.save()
-        self.assertDictEqual(saved_state1, saved_state2)
+        assert saved_state1 == saved_state2
 
     def _save_round_trip_with_loader(self, savable):
         """
@@ -144,8 +144,8 @@ class TestSavable(unittest.TestCase):
         loaded = savable.recreate_from(saved_state1)
         saved_state2 = loaded.save(object_loader)
         saved_state3 = loaded.save()
-        self.assertDictEqual(saved_state1, saved_state2)
-        self.assertNotEqual(saved_state1, saved_state3)
+        assert saved_state1 == saved_state2
+        assert saved_state1 != saved_state3
 
 
 class TestBundle(unittest.TestCase):
@@ -157,12 +157,12 @@ class TestBundle(unittest.TestCase):
 
         loop2 = asyncio.new_event_loop()
         proc2 = bundle.unbundle(plumpy.LoadSaveContext(loop=loop2))
-        self.assertIs(loop2, proc2.loop)
+        assert loop2 is proc2.loop
 
     def test_bundle_yaml(self):
         bundle = plumpy.Bundle(Save1())
         represent = yaml.dump({'bundle': bundle})
 
         bundle_loaded = yaml.load(represent, Loader=yaml.Loader)['bundle']
-        self.assertIsInstance(bundle_loaded, plumpy.Bundle)
-        self.assertDictEqual(bundle_loaded, Save1().save())
+        assert isinstance(bundle_loaded, plumpy.Bundle)
+        assert bundle_loaded == Save1().save()
