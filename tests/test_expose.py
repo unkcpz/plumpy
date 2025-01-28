@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import unittest
 
 from plumpy.ports import PortNamespace
 from plumpy.process_spec import ProcessSpec
@@ -45,7 +44,7 @@ class ExposeProcess(NewLoopProcess):
         spec.inputs.valid_type = int
 
 
-class TestExposeProcess(unittest.TestCase):
+class TestExposeProcess:
     def check_ports(self, process, namespace, expected_port_names):
         """Check the port namespace of a given process inputs spec for existence of set of expected port names."""
         port_namespace = process.spec().inputs

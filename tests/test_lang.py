@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from plumpy.lang import override, protected
 
-import unittest
 import pytest
 
 
@@ -39,7 +38,7 @@ class C(B):
         self.protected_property
 
 
-class TestProtected(unittest.TestCase):
+class TestProtected:
     def test_free_function(self):
         with pytest.raises(RuntimeError):
 
@@ -87,7 +86,7 @@ class Superclass:
         pass
 
 
-class TestOverride(unittest.TestCase):
+class TestOverride:
     def test_free_function(self):
         with pytest.raises(RuntimeError):
 
@@ -177,7 +176,7 @@ class TestOverride(unittest.TestCase):
 #     def test(self):
 #         self._c_prime_called = True
 
-#  class TestCallSuper(unittest.TestCase):
+#  class TestCallSuper:
 #     def test_one_up(self):
 #         b = B()
 #         b.test()

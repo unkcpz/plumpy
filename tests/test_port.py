@@ -1,13 +1,11 @@
 # -*- coding: utf-8 -*-
 import types
-import unittest
 
 from plumpy.ports import UNSPECIFIED, InputPort, OutputPort, Port, PortNamespace
 import pytest
 
 
-
-class TestPort(unittest.TestCase):
+class TestPort:
     def test_required(self):
         spec = Port('required_value', required=True)
 
@@ -43,7 +41,7 @@ class TestPort(unittest.TestCase):
         assert spec.validate(UNSPECIFIED) is None
 
 
-class TestInputPort(unittest.TestCase):
+class TestInputPort:
     def test_default(self):
         """Test the default value property for the InputPort."""
         port = InputPort('test', default=5)
@@ -86,7 +84,7 @@ class TestInputPort(unittest.TestCase):
         assert port.validate(some_lambda) is None
 
 
-class TestOutputPort(unittest.TestCase):
+class TestOutputPort:
     def test_default(self):
         """
         Test the default value property for the InputPort
@@ -107,26 +105,23 @@ class TestOutputPort(unittest.TestCase):
         assert port.validator == validator
 
 
-class TestPortNamespace(unittest.TestCase):
+class TestPortNamespace:
     BASE_PORT_NAME = 'port'
     BASE_PORT_NAMESPACE_NAME = 'port'
-
-    def setUp(self):
-        self.port = InputPort(self.BASE_PORT_NAME)
-        self.port_namespace = PortNamespace(self.BASE_PORT_NAMESPACE_NAME)
 
     def test_port_namespace(self):
         """
         Test basic properties and methods of an empty PortNamespace
         """
-        assert self.port_namespace.name == self.BASE_PORT_NAMESPACE_NAME
-        assert len(self.port_namespace) == 0
+        port_namespace = PortNamespace(self.BASE_PORT_NAMESPACE_NAME)
+        assert port_namespace.name == self.BASE_PORT_NAMESPACE_NAME
+        assert len(port_namespace) == 0
 
         with pytest.raises(TypeError):
-            self.port_namespace['key'] = 5
+            port_namespace['key'] = 5
 
         with pytest.raises(KeyError):
-            self.port_namespace['non_existent']
+            port_namespace['non_existent']
 
     def test_port_namespace_valid_type_and_dynamic(self):
         """Test that `dynamic` and `valid_type` attributes defined through constructor are properly set."""
@@ -156,56 +151,59 @@ class TestPortNamespace(unittest.TestCase):
             if port_values['explicit'] < 0 or port_values['dynamic'] < 0:
                 return 'Only positive integers allowed'
 
-        self.port_namespace['explicit'] = InputPort('explicit', valid_type=int)
-        self.port_namespace.validator = validator
-        self.port_namespace.valid_type = int
+        port_namespace = PortNamespace(self.BASE_PORT_NAMESPACE_NAME)
+        port_namespace['explicit'] = InputPort('explicit', valid_type=int)
+        port_namespace.validator = validator
+        port_namespace.valid_type = int
 
         # The explicit ports will be validated first before the namespace validator is called.
-        assert self.port_namespace.validate({'explicit': 1, 'dynamic': 5}) is None
-        assert self.port_namespace.validate({'dynamic': -5}) is not None
+        assert port_namespace.validate({'explicit': 1, 'dynamic': 5}) is None
+        assert port_namespace.validate({'dynamic': -5}) is not None
 
         # Validator should not be called if the namespace is not required and no value is specified for the namespace
-        self.port_namespace.required = False
-        assert self.port_namespace.validate() is None
+        port_namespace.required = False
+        assert port_namespace.validate() is None
 
     def test_port_namespace_dynamic(self):
         """
         Setting a valid type for a PortNamespace should automatically make it dynamic
         """
-        assert not self.port_namespace.dynamic
+        port_namespace = PortNamespace(self.BASE_PORT_NAMESPACE_NAME)
+        assert not port_namespace.dynamic
 
-        self.port_namespace.valid_type = (str, int)
+        port_namespace.valid_type = (str, int)
 
-        assert self.port_namespace.dynamic
-        assert self.port_namespace.valid_type == (str, int)
+        assert port_namespace.dynamic
+        assert port_namespace.valid_type == (str, int)
 
     def test_port_namespace_get_port(self):
         """
         Test get_port of PortNamespace will retrieve nested PortNamespaces and Ports as long
         as they and all intermediate nested PortNamespaces exist
         """
+        port = InputPort(self.BASE_PORT_NAME)
+        port_namespace = PortNamespace(self.BASE_PORT_NAMESPACE_NAME)
         with pytest.raises(TypeError):
-            self.port_namespace.get_port()
+            port_namespace.get_port()
 
         with pytest.raises(ValueError):
-            self.port_namespace.get_port(5)
+            port_namespace.get_port(5)
 
         with pytest.raises(ValueError):
-            self.port_namespace.get_port('sub')
+            port_namespace.get_port('sub')
 
-        port_namespace_sub = self.port_namespace.create_port_namespace('sub')
-        assert self.port_namespace.get_port('sub') == port_namespace_sub
+        port_namespace_sub = port_namespace.create_port_namespace('sub')
+        assert port_namespace.get_port('sub') == port_namespace_sub
 
         with pytest.raises(ValueError):
-            self.port_namespace.get_port('sub.name.space')
+            port_namespace.get_port('sub.name.space')
 
-        port_namespace_sub = self.port_namespace.create_port_namespace('sub.name.space')
-        assert self.port_namespace.get_port('sub.name.space') == port_namespace_sub
+        port_namespace_sub = port_namespace.create_port_namespace('sub.name.space')
+        assert port_namespace.get_port('sub.name.space') == port_namespace_sub
 
         # Add Port into subnamespace and try to get it in one go from top level port namespace
-        port_namespace_sub[self.BASE_PORT_NAME] = self.port
-        port = self.port_namespace.get_port('sub.name.space.' + self.BASE_PORT_NAME)
-        assert port == self.port
+        port_namespace_sub[self.BASE_PORT_NAME] = port
+        assert port_namespace.get_port('sub.name.space.' + self.BASE_PORT_NAME) == port
 
     def test_port_namespace_get_port_dynamic(self):
         """Test ``get_port`` with the ``create_dynamically=True`` keyword.
@@ -232,41 +230,44 @@ class TestPortNamespace(unittest.TestCase):
         """
         Test the create_port_namespace function of the PortNamespace class
         """
+        port = InputPort(self.BASE_PORT_NAME)
+        port_namespace = PortNamespace(self.BASE_PORT_NAMESPACE_NAME)
         with pytest.raises(TypeError):
-            self.port_namespace.create_port_namespace()
+            port_namespace.create_port_namespace()
 
         with pytest.raises(ValueError):
-            self.port_namespace.create_port_namespace(5)
+            port_namespace.create_port_namespace(5)
 
-        port_namespace_sub = self.port_namespace.create_port_namespace('sub')
-        port_namespace_sub = self.port_namespace.create_port_namespace('some.nested.sub.space')
+        port_namespace_sub = port_namespace.create_port_namespace('sub')
+        port_namespace_sub = port_namespace.create_port_namespace('some.nested.sub.space')
 
         # Existing intermediate nested spaces should be no problem
-        port_namespace_sub = self.port_namespace.create_port_namespace('sub.nested.space')
+        port_namespace_sub = port_namespace.create_port_namespace('sub.nested.space')
 
         # Overriding Port is not possible though
-        port_namespace_sub[self.BASE_PORT_NAME] = self.port
+        port_namespace_sub[self.BASE_PORT_NAME] = port
 
         with pytest.raises(ValueError):
-            self.port_namespace.create_port_namespace('sub.nested.space.' + self.BASE_PORT_NAME + '.further')
+            port_namespace.create_port_namespace('sub.nested.space.' + self.BASE_PORT_NAME + '.further')
 
     def test_port_namespace_set_valid_type(self):
         """Setting a valid type for a PortNamespace should automatically mark it as dynamic."""
-        assert not self.port_namespace.dynamic
-        assert self.port_namespace.valid_type is None
+        port_namespace = PortNamespace(self.BASE_PORT_NAMESPACE_NAME)
+        assert not port_namespace.dynamic
+        assert port_namespace.valid_type is None
 
         # Setting the `valid_type` should automatically set `dynamic=True` because it does not make sense to define a
         # a specific type but then not allow any values whatsoever.
-        self.port_namespace.valid_type = int
+        port_namespace.valid_type = int
 
-        assert self.port_namespace.dynamic
-        assert self.port_namespace.valid_type == int
+        assert port_namespace.dynamic
+        assert port_namespace.valid_type == int
 
-        self.port_namespace.valid_type = None
+        port_namespace.valid_type = None
 
         # Setting `valid_type` to `None` however does not automatically revert the `dynamic` attribute
-        assert self.port_namespace.dynamic
-        assert self.port_namespace.valid_type is None
+        assert port_namespace.dynamic
+        assert port_namespace.valid_type is None
 
     def test_port_namespace_validate(self):
         """Check that validating of sub namespaces works correctly.
@@ -274,57 +275,60 @@ class TestPortNamespace(unittest.TestCase):
         By setting a valid type on a port namespace, it automatically becomes dynamic. Port namespaces that are dynamic
         should accept arbitrarily nested input and should validate, as long as all leaf values satisfy the `valid_type`.
         """
-        port_namespace_sub = self.port_namespace.create_port_namespace('sub.space')
+        port_namespace = PortNamespace(self.BASE_PORT_NAMESPACE_NAME)
+        port_namespace_sub = port_namespace.create_port_namespace('sub.space')
         port_namespace_sub.valid_type = int
         assert port_namespace_sub.dynamic
 
         # Check that passing a non mapping type raises
-        validation_error = self.port_namespace.validate(5)
+        validation_error = port_namespace.validate(5)
         assert validation_error is not None
 
         # Valid input
-        validation_error = self.port_namespace.validate({'sub': {'space': {'output': 5}}})
+        validation_error = port_namespace.validate({'sub': {'space': {'output': 5}}})
         assert validation_error is None
 
         # Valid input: `sub.space` is dynamic, so should allow arbitrarily nested namespaces as long as the leaf values
         # match the valid type, which is `int` in this example.
-        validation_error = self.port_namespace.validate({'sub': {'space': {'output': {'invalid': 5}}}})
+        validation_error = port_namespace.validate({'sub': {'space': {'output': {'invalid': 5}}}})
         assert validation_error is None
 
         # Invalid input - the value in ``space`` is not ``int`` but a ``str``
-        validation_error = self.port_namespace.validate({'sub': {'space': {'output': '5'}}})
+        validation_error = port_namespace.validate({'sub': {'space': {'output': '5'}}})
         assert validation_error is not None
 
         # Check the breadcrumbs are correct
-        assert validation_error.port == \
-            self.port_namespace.NAMESPACE_SEPARATOR.join((self.BASE_PORT_NAMESPACE_NAME, 'sub', 'space', 'output'))
+        assert validation_error.port == port_namespace.NAMESPACE_SEPARATOR.join(
+            (self.BASE_PORT_NAMESPACE_NAME, 'sub', 'space', 'output')
+        )
 
     def test_port_namespace_required(self):
         """Verify that validation will fail if required port is not specified."""
-        port_namespace_sub = self.port_namespace.create_port_namespace('sub.space')
+        port_namespace = PortNamespace(self.BASE_PORT_NAMESPACE_NAME)
+        port_namespace_sub = port_namespace.create_port_namespace('sub.space')
         port_namespace_sub.valid_type = int
 
         # Create a required port
-        self.port_namespace['required_port'] = OutputPort('required_port', valid_type=int, required=True)
+        port_namespace['required_port'] = OutputPort('required_port', valid_type=int, required=True)
 
         # No port values at all should fail
         port_values = {}
-        validation_error = self.port_namespace.validate(port_values)
+        validation_error = port_namespace.validate(port_values)
         assert validation_error is not None
 
         # Some port value, but still the required output is not defined, so should fail
         port_values = {'sub': {'space': {'output': 5}}}
-        validation_error = self.port_namespace.validate(port_values)
+        validation_error = port_namespace.validate(port_values)
         assert validation_error is not None
 
         # Specifying the required port and some additional ones should be valid
         port_values = {'sub': {'space': {'output': 5}}, 'required_port': 1}
-        validation_error = self.port_namespace.validate(port_values)
+        validation_error = port_namespace.validate(port_values)
         assert validation_error is None
 
         # Also just the required port should be valid
         port_values = {'required_port': 1}
-        validation_error = self.port_namespace.validate(port_values)
+        validation_error = port_namespace.validate(port_values)
         assert validation_error is None
 
     def test_port_namespace_no_populate_defaults(self):

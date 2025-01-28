@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import inspect
-import unittest
 
 import pytest
 
@@ -124,7 +123,7 @@ class DummyWc(WorkChain):
         pass
 
 
-class TestContext(unittest.TestCase):
+class TestContext:
     def test_attributes(self):
         wc = DummyWc()
         wc.ctx.new_attr = 5
@@ -144,7 +143,7 @@ class TestContext(unittest.TestCase):
             wc.ctx['new_attr']
 
 
-class TestWorkchain(unittest.TestCase):
+class TestWorkchain:
     maxDiff = None
 
     def test_run(self):
@@ -585,7 +584,7 @@ class TestWorkchain(unittest.TestCase):
         assert collector.stepper_strings == stepper_strings
 
 
-class TestImmutableInputWorkchain(unittest.TestCase):
+class TestImmutableInputWorkchain:
     """
     Test that inputs cannot be modified
     """
@@ -594,7 +593,6 @@ class TestImmutableInputWorkchain(unittest.TestCase):
         """
         Check that from within the WorkChain self.inputs returns an AttributesFrozendict which should be immutable
         """
-        test_class = self
 
         class Wf(WorkChain):
             @classmethod
@@ -609,19 +607,19 @@ class TestImmutableInputWorkchain(unittest.TestCase):
 
             def step_one(self):
                 # Attempt to manipulate the inputs dictionary which since it is a AttributesFrozendict should raise
-                with test_class.assertRaises(TypeError):
+                with pytest.raises(TypeError):
                     self.inputs['a'] = 3
-                with test_class.assertRaises(AttributeError):
+                with pytest.raises(AttributeError):
                     self.inputs.pop('b')
-                with test_class.assertRaises(TypeError):
+                with pytest.raises(TypeError):
                     self.inputs['c'] = 4
 
             def step_two(self):
                 # Verify that original inputs are still there with same value and no inputs were added
-                test_class.assertIn('a', self.inputs)
-                test_class.assertIn('b', self.inputs)
-                test_class.assertNotIn('c', self.inputs)
-                test_class.assertEqual(self.inputs['a'], 1)
+                assert 'a' in self.inputs
+                assert 'b' in self.inputs
+                assert 'c' not in self.inputs
+                assert self.inputs['a'] == 1
 
         workchain = Wf(inputs=dict(a=1, b=2))
         workchain.execute()
@@ -630,7 +628,6 @@ class TestImmutableInputWorkchain(unittest.TestCase):
         """
         Check that namespaced inputs also return AttributeFrozendicts and are hence immutable
         """
-        test_class = self
 
         class Wf(WorkChain):
             @classmethod
@@ -644,19 +641,19 @@ class TestImmutableInputWorkchain(unittest.TestCase):
 
             def step_one(self):
                 # Attempt to manipulate the namespaced inputs dictionary which should raise
-                with test_class.assertRaises(TypeError):
+                with pytest.raises(TypeError):
                     self.inputs.subspace['one'] = 3
-                with test_class.assertRaises(AttributeError):
+                with pytest.raises(AttributeError):
                     self.inputs.subspace.pop('two')
-                with test_class.assertRaises(TypeError):
+                with pytest.raises(TypeError):
                     self.inputs.subspace['four'] = 4
 
             def step_two(self):
                 # Verify that original inputs are still there with same value and no inputs were added
-                test_class.assertIn('one', self.inputs.subspace)
-                test_class.assertIn('two', self.inputs.subspace)
-                test_class.assertNotIn('four', self.inputs.subspace)
-                test_class.assertEqual(self.inputs.subspace['one'], 1)
+                assert 'one' in self.inputs.subspace
+                assert 'two' in self.inputs.subspace
+                assert 'four' not in self.inputs.subspace
+                assert self.inputs.subspace['one'] == 1
 
         workchain = Wf(inputs=dict(subspace={'one': 1, 'two': 2}))
         workchain.execute()

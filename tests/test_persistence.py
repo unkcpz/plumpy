@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import asyncio
 from typing import Any
-import unittest
 
 import yaml
 
@@ -102,7 +101,7 @@ class CustomObjectLoader(DefaultObjectLoader):
         return super().identify_object(obj)
 
 
-class TestSavable(unittest.TestCase):
+class TestSavable:
     def test_empty_savable(self):
         self._save_round_trip(SaveEmpty())
 
@@ -148,7 +147,7 @@ class TestSavable(unittest.TestCase):
         assert saved_state1 != saved_state3
 
 
-class TestBundle(unittest.TestCase):
+class TestBundle:
     def test_bundle_load_context(self):
         """Check that the loop from the load context is used"""
         loop1 = asyncio.get_event_loop()

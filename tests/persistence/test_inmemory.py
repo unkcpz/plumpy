@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-import unittest
 
 import plumpy
 
 from ..utils import ProcessWithCheckpoint
 
 
-class TestInMemoryPersister(unittest.TestCase):
+class TestInMemoryPersister:
     def test_save_load_roundtrip(self):
         """
         Test the plumpy.PicklePersister by taking a dummpy process, saving a checkpoint

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import unittest
 
 from plumpy.base import utils
 import pytest
@@ -24,7 +23,7 @@ class DontCall(Root):
         pass
 
 
-class TestSuperCheckMixin(unittest.TestCase):
+class TestSuperCheckMixin:
     def test_do_call(self):
         DoCall().do()
 

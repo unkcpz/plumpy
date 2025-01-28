@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import tempfile
-import unittest
 
 if getattr(tempfile, 'TemporaryDirectory', None) is None:
     from backports import tempfile
@@ -10,7 +9,7 @@ import plumpy
 from ..utils import ProcessWithCheckpoint
 
 
-class TestPicklePersister(unittest.TestCase):
+class TestPicklePersister:
     def test_save_load_roundtrip(self):
         """
         Test the plumpy.PicklePersister by taking a dummpy process, saving a checkpoint

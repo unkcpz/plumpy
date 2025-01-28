@@ -3,7 +3,6 @@
 
 import asyncio
 import enum
-import unittest
 
 import pytest
 from plumpy.futures import CancellableAction
@@ -70,7 +69,7 @@ async def test_process_scope():
     await p1task, p2task
 
 
-class TestProcess(unittest.TestCase):
+class TestProcess:
     def test_spec(self):
         """
         Check that the references to specs are doing the right thing...
@@ -564,14 +563,12 @@ class TestProcess(unittest.TestCase):
     def test_pause_play_in_process(self):
         """Test that we can pause and play that by playing within the process"""
 
-        test_case = self
-
         class TestPausePlay(plumpy.Process):
             def run(self):
                 fut = self.pause()
-                test_case.assertIsInstance(fut, CancellableAction)
+                assert isinstance(fut, CancellableAction)
                 result = self.play()
-                test_case.assertTrue(result)
+                assert result
 
         proc = TestPausePlay()
 
@@ -580,11 +577,10 @@ class TestProcess(unittest.TestCase):
         assert proc.state_label == plumpy.ProcessState.FINISHED
 
     def test_process_stack(self):
-        test_case = self
 
         class StackTest(plumpy.Process):
             def run(self):
-                test_case.assertIs(self, Process.current())
+                assert self is Process.current()
 
         proc = StackTest()
         proc.execute()
@@ -705,7 +701,7 @@ class SavePauseProc(plumpy.Process):
         self.steps_ran.append(self.step2.__name__)
 
 
-class TestProcessSaving(unittest.TestCase):
+class TestProcessSaving:
     maxDiff = None
 
     def test_running_save(self):
@@ -881,7 +877,7 @@ class TestProcessSaving(unittest.TestCase):
         utils.compare_dictionaries(None, None, bundle1, bundle2, exclude={'_listeners'})
 
 
-class TestProcessNamespace(unittest.TestCase):
+class TestProcessNamespace:
     def test_namespaced_process(self):
         """
         Test that inputs in nested namespaces are properly validated and the returned
@@ -1027,7 +1023,7 @@ class TestProcessNamespace(unittest.TestCase):
         assert proc.outputs[namespace]['nested']['two'] == 2
 
 
-class TestProcessEvents(unittest.TestCase):
+class TestProcessEvents:
     def test_basic_events(self):
         proc = utils.DummyProcessWithOutput()
         events_tester = utils.ProcessListenerTester(

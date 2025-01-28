@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
 from typing import final
-import unittest
 
 from plumpy.base import state_machine
 from plumpy.exceptions import InvalidStateError
@@ -148,7 +147,7 @@ class CdPlayer(state_machine.StateMachine):
         self.transition_to(Stopped(self))
 
 
-class TestStateMachine(unittest.TestCase):
+class TestStateMachine:
     def test_basic(self):
         cd_player = CdPlayer()
         assert cd_player.state_label == STOPPED

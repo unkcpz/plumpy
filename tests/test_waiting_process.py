@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import asyncio
-import unittest
 
 import plumpy
 from plumpy import BundleKeys
@@ -9,7 +8,7 @@ from . import utils
 import pytest
 
 
-class TestWaitingProcess(unittest.TestCase):
+class TestWaitingProcess:
     def test_instance_state(self):
         proc = utils.ThreeSteps()
         wl = utils.ProcessSaver(proc)
