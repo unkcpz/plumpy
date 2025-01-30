@@ -9,7 +9,6 @@ import fnmatch
 import inspect
 import os
 import pickle
-import uuid
 from collections.abc import Generator, Iterable
 from typing import (
     TYPE_CHECKING,
@@ -31,19 +30,6 @@ PersistedCheckpoint = collections.namedtuple('PersistedCheckpoint', ['pid', 'tag
 
 if TYPE_CHECKING:
     from .processes import Process
-
-
-def uuid_representer(dumper, data):  # type: ignore
-    return dumper.represent_scalar('!uuid', str(data))
-
-
-def uuid_constructor(loader, node):  # type: ignore
-    value = loader.construct_scalar(node)
-    return uuid.UUID(value)
-
-
-yaml.add_representer(uuid.UUID, uuid_representer)
-yaml.add_constructor('!uuid', uuid_constructor)
 
 
 class LoadSaveContext:

@@ -8,7 +8,8 @@ import tempfile
 import uuid
 import pytest
 import shortuuid
-import yaml
+# import yaml
+import msgpack
 
 from kiwipy.rmq import RmqThreadCommunicator
 
@@ -41,8 +42,8 @@ def _coordinator():
         message_exchange=message_exchange,
         task_exchange=task_exchange,
         task_queue=task_queue,
-        encoder=functools.partial(yaml.dump, encoding='utf-8'),
-        decoder=functools.partial(yaml.load, Loader=yaml.FullLoader),
+        encoder=process_control.MSGPACK_ENCODER,
+        decoder=process_control.MSGPACK_DECODER,
     )
 
     loop = asyncio.get_event_loop()
