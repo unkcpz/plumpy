@@ -19,6 +19,7 @@ from typing import (
     TypeVar,
     runtime_checkable,
 )
+import uuid
 
 import yaml
 from typing_extensions import Self
@@ -30,6 +31,16 @@ PersistedCheckpoint = collections.namedtuple('PersistedCheckpoint', ['pid', 'tag
 
 if TYPE_CHECKING:
     from .processes import Process
+
+def uuid_representer(dumper, data):
+    return dumper.represent_scalar(u'!uuid', str(data))
+
+def uuid_constructor(loader, node):
+    value = loader.construct_scalar(node)
+    return uuid.UUID(value)
+
+yaml.add_representer(uuid.UUID, uuid_representer)
+yaml.add_constructor(u'!uuid', uuid_constructor)
 
 
 class LoadSaveContext:

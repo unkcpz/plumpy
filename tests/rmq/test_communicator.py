@@ -41,7 +41,8 @@ def _coordinator():
         message_exchange=message_exchange,
         task_exchange=task_exchange,
         task_queue=task_queue,
-        decoder=functools.partial(yaml.load, Loader=yaml.Loader),
+        encoder=functools.partial(yaml.dump, encoding='utf-8'),
+        decoder=functools.partial(yaml.load, Loader=yaml.FullLoader),
     )
 
     loop = asyncio.get_event_loop()
