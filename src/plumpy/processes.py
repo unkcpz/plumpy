@@ -1314,10 +1314,10 @@ class Process(StateMachine, metaclass=ProcessStateMachineMeta):
 
         :return: None if not terminated, otherwise `self.outputs`
         """
-        if not self.has_terminated():
-            asyncio.run(self.step_until_terminated())
+        if self.has_terminated():
+            return self.result()
 
-        return self.future().result()
+        return asyncio.run(self.step_until_terminated())
 
     @ensure_not_closed
     async def step(self) -> None:
@@ -1373,7 +1373,7 @@ class Process(StateMachine, metaclass=ProcessStateMachineMeta):
             self._stepping = False
             self._set_interrupt_action(None)
 
-    async def step_until_terminated(self) -> None:
+    async def step_until_terminated(self) -> Any:
         """If the process has not terminated,
         run the current step and wait until the step finished.
 
@@ -1382,6 +1382,8 @@ class Process(StateMachine, metaclass=ProcessStateMachineMeta):
         """
         while not self.has_terminated():
             await self.step()
+
+        return await self.future()
 
     # endregion
 
