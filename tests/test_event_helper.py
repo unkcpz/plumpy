@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
+import pytest
+
 from plumpy.event_helper import EventHelper
 from plumpy.persistence import Savable, load
 from tests.utils import DummyProcess, ProcessListenerTester
 
 
+@pytest.mark.usefixtures('custom_event_loop_policy')
 def test_event_helper_savable():
     eh = EventHelper(ProcessListenerTester)
 

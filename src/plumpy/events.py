@@ -9,6 +9,14 @@ if TYPE_CHECKING:
     from .processes import Process
 
 get_event_loop = asyncio.get_event_loop
+new_event_loop = asyncio.new_event_loop
+
+
+def create_running_loop():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    return loop
 
 
 def set_event_loop(*args: Any, **kwargs: Any) -> None:
@@ -24,15 +32,18 @@ class PlumpyEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
 
     _loop: asyncio.AbstractEventLoop | None = None
 
-    def get_event_loop(self) -> asyncio.AbstractEventLoop:
-        """Return the patched event loop."""
+    def new_event_loop(self) -> asyncio.AbstractEventLoop:
+        """Create new event loop and patch event loop as re-entrant."""
         import nest_asyncio
 
-        if self._loop is None:
-            self._loop = super().get_event_loop()
-            nest_asyncio.apply(self._loop)
+        self._loop = super().new_event_loop()
+        nest_asyncio.apply(self._loop)
 
         return self._loop
+
+    def get_event_loop(self) -> asyncio.AbstractEventLoop:
+        """Return the patched event loop."""
+        return self._loop or self.new_event_loop()
 
 
 def set_event_loop_policy() -> None:
@@ -45,7 +56,7 @@ def set_event_loop_policy() -> None:
 
 def reset_event_loop_policy() -> None:
     """Reset the event loop policy to the default."""
-    loop = get_event_loop()
+    loop = asyncio.get_event_loop()
 
     cls = loop.__class__
 

@@ -45,6 +45,7 @@ def sync_controller(_coordinator):
 
 class TestRemoteProcessController:
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     async def test_pause(self, _coordinator, async_controller):
         proc = utils.WaitForSignalProcess(coordinator=_coordinator)
         # Run the process in the background
@@ -57,6 +58,7 @@ class TestRemoteProcessController:
         assert proc.paused
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     async def test_play(self, _coordinator, async_controller):
         proc = utils.WaitForSignalProcess(coordinator=_coordinator)
         # Run the process in the background
@@ -75,6 +77,7 @@ class TestRemoteProcessController:
         await async_controller.kill_process(proc.pid)
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     async def test_kill(self, _coordinator, async_controller):
         proc = utils.WaitForSignalProcess(coordinator=_coordinator)
         # Run the process in the event loop
@@ -88,6 +91,7 @@ class TestRemoteProcessController:
         assert proc.state_label == plumpy.ProcessState.KILLED
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     async def test_status(self, _coordinator, async_controller):
         proc = utils.WaitForSignalProcess(coordinator=_coordinator)
         # Run the process in the background
@@ -101,6 +105,7 @@ class TestRemoteProcessController:
         # make sure proc reach the final state
         await async_controller.kill_process(proc.pid)
 
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     def test_broadcast(self, _coordinator):
         messages = []
 
@@ -123,6 +128,7 @@ class TestRemoteProcessController:
 
 class TestRemoteProcessThreadController:
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     async def test_pause(self, _coordinator, sync_controller):
         proc = utils.WaitForSignalProcess(coordinator=_coordinator)
 
@@ -137,6 +143,7 @@ class TestRemoteProcessThreadController:
         assert proc.paused
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     async def test_pause_all(self, _coordinator, sync_controller):
         """Test pausing all processes on a communicator"""
         procs = []
@@ -148,6 +155,7 @@ class TestRemoteProcessThreadController:
         await utils.wait_util(lambda: all([proc.paused for proc in procs]))
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     async def test_play_all(self, _coordinator, sync_controller):
         """Test pausing all processes on a communicator"""
         procs = []
@@ -162,6 +170,7 @@ class TestRemoteProcessThreadController:
         await utils.wait_util(lambda: all([not proc.paused for proc in procs]))
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     async def test_play(self, _coordinator, sync_controller):
         proc = utils.WaitForSignalProcess(coordinator=_coordinator)
         assert proc.pause()
@@ -176,6 +185,7 @@ class TestRemoteProcessThreadController:
         assert proc.state_label == plumpy.ProcessState.CREATED
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     async def test_kill(self, _coordinator, sync_controller):
         proc = utils.WaitForSignalProcess(coordinator=_coordinator)
 
@@ -190,6 +200,7 @@ class TestRemoteProcessThreadController:
         assert proc.state_label == plumpy.ProcessState.KILLED
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     async def test_kill_all(self, _coordinator, sync_controller):
         """Test pausing all processes on a communicator"""
         procs = []
@@ -201,6 +212,7 @@ class TestRemoteProcessThreadController:
         assert all([proc.state_label == plumpy.ProcessState.KILLED for proc in procs])
 
     @pytest.mark.asyncio
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     async def test_status(self, _coordinator, sync_controller):
         proc = utils.WaitForSignalProcess(coordinator=_coordinator)
         # Run the process in the background

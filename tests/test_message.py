@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import asyncio
 import pytest
 
 import plumpy
@@ -26,6 +27,7 @@ class CustomObjectLoader(plumpy.DefaultObjectLoader):
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures('custom_event_loop_policy')
 async def test_continue():
     persister = plumpy.InMemoryPersister()
     load_context = plumpy.LoadSaveContext()
@@ -42,6 +44,7 @@ async def test_continue():
 
 
 @pytest.mark.asyncio
+@pytest.mark.usefixtures('custom_event_loop_policy')
 async def test_loader_is_used():
     """Make sure that the provided class loader is used by the process launcher"""
     loader = CustomObjectLoader()
