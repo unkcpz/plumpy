@@ -1314,10 +1314,15 @@ class Process(StateMachine, metaclass=ProcessStateMachineMeta):
 
         :return: None if not terminated, otherwise `self.outputs`
         """
+        from .reentry import _get_runner
+
         if self.has_terminated():
             return self.result()
 
-        return asyncio.run(self.step_until_terminated())
+        runner = _get_runner()
+        with runner as runner:
+            return runner.run(self.step_until_terminated())
+        # return asyncio.run(self.step_until_terminated())
 
     @ensure_not_closed
     async def step(self) -> None:

@@ -71,6 +71,7 @@ async def test_process_scope():
 
 
 class TestProcess:
+    @pytest.mark.usefixtures('custom_event_loop_policy')
     def test_spec(self):
         """
         Check that the references to specs are doing the right thing...
