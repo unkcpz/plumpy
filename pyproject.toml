@@ -30,7 +30,6 @@ keywords = ['workflow', 'multithreaded', 'rabbitmq']
 requires-python = '>=3.8'
 dependencies = [
     'kiwipy[rmq]~=0.8.5',
-    'nest_asyncio~=1.5,>=1.5.1',
     'pyyaml~=6.0',
 ]
 
@@ -132,7 +131,6 @@ module = [
     'aiocontextvars.*',
     'frozendict.*',
     'kiwipy.*',
-    'nest_asyncio.*',
     'tblib.*',
 ]
 ignore_missing_imports = true

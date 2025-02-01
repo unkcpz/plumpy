@@ -1292,16 +1292,22 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         """
 
     @ensure_not_closed
-    def execute(self) -> Optional[Dict[str, Any]]:
+    def execute(self) -> Optional[Any]:
         """
         Execute the process.  This will return if the process terminates or is paused.
 
         :return: None if not terminated, otherwise `self.outputs`
         """
-        if not self.has_terminated():
-            self.loop.run_until_complete(self.step_until_terminated())
+        if self.has_terminated():
+            return self.result()
 
-        return self.future().result()
+        if self.loop.is_running():
+            result = self.loop.create_task(self.step_until_terminated())
+        else:
+            result = self.loop.run_until_complete(self.step_until_terminated())
+
+        return result
+        
 
     @ensure_not_closed
     async def step(self) -> None:
@@ -1351,7 +1357,7 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
             self._stepping = False
             self._set_interrupt_action(None)
 
-    async def step_until_terminated(self) -> None:
+    async def step_until_terminated(self) -> Any:
         """If the process has not terminated,
         run the current step and wait until the step finished.
 
@@ -1360,6 +1366,8 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         """
         while not self.has_terminated():
             await self.step()
+
+        return await self.future()
 
     # endregion
 

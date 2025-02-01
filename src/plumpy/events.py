@@ -36,11 +36,8 @@ class PlumpyEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
 
     def get_event_loop(self) -> asyncio.AbstractEventLoop:
         """Return the patched event loop."""
-        import nest_asyncio
-
         if self._loop is None:
             self._loop = super().get_event_loop()
-            nest_asyncio.apply(self._loop)
 
         return self._loop
 
@@ -55,13 +52,6 @@ def set_event_loop_policy() -> None:
 
 def reset_event_loop_policy() -> None:
     """Reset the event loop policy to the default."""
-    loop = get_event_loop()
-
-    cls = loop.__class__
-
-    del cls._check_running  # type: ignore
-    del cls._nest_patched  # type: ignore
-
     asyncio.set_event_loop_policy(None)
 
 
