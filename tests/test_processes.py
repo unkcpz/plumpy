@@ -41,7 +41,7 @@ class ForgetToCallParent(plumpy.Process):
             super().on_kill(msg)
 
 
-@pytest.mark.usefixtures('custom_event_loop_policy')
+# @pytest.mark.usefixtures('custom_event_loop_policy')
 def test_process_is_savable():
     proc = utils.DummyProcess()
     assert isinstance(proc, Savable)
@@ -585,7 +585,7 @@ class TestProcess:
         proc = StackTest()
         proc.execute()
 
-    @pytest.mark.usefixtures('custom_event_loop_policy')
+    # @pytest.mark.usefixtures('custom_event_loop_policy')
     def test_process_stack_multiple(self):
         """
         Run multiple and nested processes to make sure the process stack is always correct
@@ -621,7 +621,7 @@ class TestProcess:
 
         assert len(expect_true) == n_run * 3
 
-    @pytest.mark.usefixtures('custom_event_loop_policy')
+    # @pytest.mark.usefixtures('custom_event_loop_policy')
     def test_process_nested(self):
         """
         Run multiple and nested processes to make sure the process stack is always correct

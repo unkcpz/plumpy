@@ -1308,16 +1308,22 @@ class Process(StateMachine, metaclass=ProcessStateMachineMeta):
         """
 
     @ensure_not_closed
-    def execute(self) -> dict[str, Any] | None:
+    def execute(self) -> Any | None:
         """
         Execute the process.  This will return if the process terminates or is paused.
 
         :return: None if not terminated, otherwise `self.outputs`
         """
         if not self.has_terminated():
-            self.loop.run_until_complete(self.step_until_terminated())
+            if self.loop.is_running():
+                result = self.loop.create_task(self.step_until_terminated())
+            else:
+                result = self.loop.run_until_complete(self.step_until_terminated())
 
-        return self.future().result()
+            return result
+
+        else:
+            self.result()
 
     @ensure_not_closed
     async def step(self) -> None:
@@ -1373,7 +1379,7 @@ class Process(StateMachine, metaclass=ProcessStateMachineMeta):
             self._stepping = False
             self._set_interrupt_action(None)
 
-    async def step_until_terminated(self) -> None:
+    async def step_until_terminated(self) -> Any:
         """If the process has not terminated,
         run the current step and wait until the step finished.
 
@@ -1382,6 +1388,9 @@ class Process(StateMachine, metaclass=ProcessStateMachineMeta):
         """
         while not self.has_terminated():
             await self.step()
+
+        # XXX: is the typing defineted?
+        return await self.future()
 
     # endregion
 
