@@ -20,16 +20,13 @@ def new_event_loop(*args: Any, **kwargs: Any) -> asyncio.AbstractEventLoop:
 
 
 class PlumpyEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
-    """Custom event policy that always returns the same event loop that is made reentrant by ``nest_asyncio``."""
+    """Custom event policy that avoid using deprecated asyncio.get_event_loop"""
 
     _loop: asyncio.AbstractEventLoop | None = None
 
     def new_event_loop(self) -> asyncio.AbstractEventLoop:
         """Create new event loop and patch as re-entrant loop."""
-        import nest_asyncio
-
         self._loop = super().new_event_loop()
-        nest_asyncio.apply(self._loop)
 
         return self._loop
 
@@ -52,11 +49,6 @@ def reset_event_loop_policy() -> None:
     old_loop = asyncio.get_event_loop()
     if not old_loop.is_closed():
         # purge weakref to prevent memory leak
-        cls = old_loop.__class__
-
-        del cls._check_running  # type: ignore
-        del cls._nest_patched  # type: ignore
-
         old_loop.close()
 
     # 2. Reset the policy to the default (i.e. None):
