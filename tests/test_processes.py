@@ -41,7 +41,6 @@ class ForgetToCallParent(plumpy.Process):
             super().on_kill(msg)
 
 
-@pytest.mark.usefixtures('custom_event_loop_policy')
 def test_process_is_savable():
     proc = utils.DummyProcess()
     assert isinstance(proc, Savable)
@@ -71,7 +70,6 @@ async def test_process_scope():
 
 
 class TestProcess:
-    @pytest.mark.usefixtures('custom_event_loop_policy')
     def test_spec(self):
         """
         Check that the references to specs are doing the right thing...
@@ -586,7 +584,6 @@ class TestProcess:
         proc = StackTest()
         proc.execute()
 
-    @pytest.mark.usefixtures('custom_event_loop_policy')
     def test_process_stack_multiple(self):
         """
         Run multiple and nested processes to make sure the process stack is always correct
@@ -622,7 +619,6 @@ class TestProcess:
 
         assert len(expect_true) == n_run * 3
 
-    @pytest.mark.usefixtures('custom_event_loop_policy')
     def test_process_nested(self):
         """
         Run multiple and nested processes to make sure the process stack is always correct
@@ -637,6 +633,17 @@ class TestProcess:
                 StackTest().execute()
 
         ParentProcess().execute()
+
+    @pytest.mark.asyncio
+    async def test_processes_run_in_sequence(self):
+        """Run execute for two processes in sequence, to check the main thread event loop is intactive"""
+
+        class StackTest(plumpy.Process):
+            def run(self):
+                pass
+
+        StackTest().execute()
+        StackTest().execute()
 
     def test_call_soon(self):
         class CallSoon(plumpy.Process):

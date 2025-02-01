@@ -341,6 +341,7 @@ class Process(StateMachine, metaclass=ProcessStateMachineMeta):
         self.spec().seal()
 
         self._loop = loop or asyncio.get_event_loop()
+        print("process: ", id(self._loop))
 
         self._setup_event_hooks()
 
@@ -1316,13 +1317,28 @@ class Process(StateMachine, metaclass=ProcessStateMachineMeta):
         """
         from .reentry import _get_runner
 
-        if self.has_terminated():
-            return self.result()
+        if not self.has_terminated():
+            coro = self.step_until_terminated()
+            with _get_runner(loop=self.loop) as runner:
+                print("I got runner: ", runner)
+                result = runner.run(coro)
 
-        runner = _get_runner()
-        with runner as runner:
-            return runner.run(self.step_until_terminated())
-        # return asyncio.run(self.step_until_terminated())
+            return result
+
+        else:
+            self.result()
+
+    async def step_until_terminated(self) -> Any:
+        """If the process has not terminated,
+        run the current step and wait until the step finished.
+
+        This is the function run by the event loop (not ``step``).
+
+        """
+        while not self.has_terminated():
+            await self.step()
+
+        return await self.future()
 
     @ensure_not_closed
     async def step(self) -> None:
@@ -1377,18 +1393,6 @@ class Process(StateMachine, metaclass=ProcessStateMachineMeta):
         finally:
             self._stepping = False
             self._set_interrupt_action(None)
-
-    async def step_until_terminated(self) -> Any:
-        """If the process has not terminated,
-        run the current step and wait until the step finished.
-
-        This is the function run by the event loop (not ``step``).
-
-        """
-        while not self.has_terminated():
-            await self.step()
-
-        return await self.future()
 
     # endregion
 

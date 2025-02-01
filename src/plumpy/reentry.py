@@ -9,6 +9,7 @@ import threading
 from weakref import WeakSet
 from greenlet import greenlet
 
+
 def _close_loop(loop):
     if loop is not None:
         try:
@@ -22,12 +23,14 @@ def _close_loop(loop):
         finally:
             loop.close()
 
+
 class _Genlet(greenlet):
     """
     Generator-like object based on ``greenlets``. It allows nested :class:`_Genlet`
     to make their parent yield on their behalf, as if callees could decide to
     be annotated ``yield from`` without modifying the caller.
     """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -225,21 +228,27 @@ def _check_executor_alive(executor):
 
 _PATCHED_LOOP_LOCK = threading.Lock()
 _PATCHED_LOOP = WeakSet()
+
+
 def _install_task_factory(loop):
     """
     Install a task factory on the given event ``loop`` so that top-level
     coroutines are wrapped using :func:`allow_nested_run`. This ensures that
     the nested :func:`run` infrastructure will be available.
     """
+
     def install(loop):
         if sys.version_info >= (3, 11):
+
             def default_factory(loop, coro, context=None):
                 return asyncio.Task(coro, loop=loop, context=context)
         else:
+
             def default_factory(loop, coro, context=None):
                 return asyncio.Task(coro, loop=loop)
 
         make_task = loop.get_task_factory() or default_factory
+
         def factory(loop, coro, context=None):
             # Make sure each Task will be able to yield on behalf of its nested
             # await beneath blocking layers
@@ -273,6 +282,7 @@ class _CoroRunner(abc.ABC):
     the awaitables yielded by an async generator that are all attached to a
     single event loop.
     """
+
     @abc.abstractmethod
     def _run(self, coro):
         pass
@@ -298,6 +308,7 @@ class _ThreadCoroRunner(_CoroRunner):
     Critically, this allows running multiple coroutines out of the same thread,
     which will be reserved until the runner ``__exit__`` method is called.
     """
+
     def __init__(self, future, jobq, resq):
         self._future = future
         self._jobq = jobq
@@ -336,7 +347,9 @@ class _ThreadCoroRunner(_CoroRunner):
             if _check_executor_alive(executor):
                 raise e
             else:
-                raise RuntimeError('Devlib relies on nested asyncio implementation requiring threads. These threads are not available while shutting down the interpreter.')
+                raise RuntimeError(
+                    'Relies on nested asyncio implementation requiring threads. These threads are not available while shutting down the interpreter.'
+                )
 
         return cls(
             jobq=jobq,
@@ -368,6 +381,7 @@ class _LoopCoroRunner(_CoroRunner):
     a new event loop will be created in ``__enter__`` and closed in
     ``__exit__``.
     """
+
     def __init__(self, loop):
         self.loop = loop
         self._owned = False
@@ -380,6 +394,7 @@ class _LoopCoroRunner(_CoroRunner):
         # context=...) or loop.create_task(..., context=...) but these APIs are
         # only available since Python 3.11
         ctx = None
+
         async def capture_ctx():
             nonlocal ctx
             try:
@@ -397,6 +412,7 @@ class _LoopCoroRunner(_CoroRunner):
         if loop is None:
             owned = True
             loop = asyncio.new_event_loop()
+            print(id(loop))
         else:
             owned = False
 
@@ -410,6 +426,7 @@ class _LoopCoroRunner(_CoroRunner):
         if self._owned:
             asyncio.set_event_loop(None)
             _close_loop(self.loop)
+            print(f"close {id(self.loop)} {self.loop}")
 
 
 class _GenletCoroRunner(_CoroRunner):
@@ -417,6 +434,7 @@ class _GenletCoroRunner(_CoroRunner):
     Run a coroutine assuming one of the parent coroutines was wrapped with
     :func:`allow_nested_run`.
     """
+
     def __init__(self, g):
         self._g = g
 
@@ -424,13 +442,22 @@ class _GenletCoroRunner(_CoroRunner):
         return self._g.consume_coro(coro, None)
 
 
-def _get_runner():
+def _get_runner(loop=None):
     executor = _CORO_THREAD_EXECUTOR
     g = _Genlet.get_enclosing()
     try:
-        loop = asyncio.get_running_loop()
+        loop = loop or asyncio.get_running_loop()
     except RuntimeError:
         loop = None
+
+    print("!!!!!!")
+    print("NN", loop)
+    print("id is: ", id(loop))
+
+    # 1. If there is an existing _Genlet in the call stack, it uses _GenletCoroRunner.
+    # 2. Else if there is no running event loop, it creates or re-uses one with _LoopCoroRunner.
+    # 3. Else if there is a running event loop in the same thread but no _Genlet, it uses a _ThreadCoroRunner to
+    # offload to a separate thread with its own event loop.
 
     # We have an coroutine wrapped with allow_nested_run() higher in the
     # callstack, that we will be able to use as a conduit to yield the
