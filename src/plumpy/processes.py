@@ -1307,10 +1307,29 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
 
         :return: None if not terminated, otherwise `self.outputs`
         """
-        if not self.has_terminated():
-            self.loop.run_until_complete(self.step_until_terminated())
+        from plumpy.reentry import get_runner
 
-        return self.future().result()
+        if not self.has_terminated():
+            coro = self.step_until_terminated()
+            with get_runner(loop=self.loop) as runner:
+                print('I got runner: ', runner)
+                result = runner.run(coro)
+
+            return result
+
+        else:
+            self.result()
+
+    async def step_until_terminated(self) -> Any:
+        """If the process has not terminated,
+        run the current step and wait until the step finished.
+
+        This is the function run by the event loop (not ``step``).
+        """
+        while not self.has_terminated():
+            await self.step()
+
+        return await self.future()
 
     @ensure_not_closed
     async def step(self) -> None:
@@ -1360,16 +1379,6 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         finally:
             self._stepping = False
             self._set_interrupt_action(None)
-
-    async def step_until_terminated(self) -> None:
-        """If the process has not terminated,
-        run the current step and wait until the step finished.
-
-        This is the function run by the event loop (not ``step``).
-
-        """
-        while not self.has_terminated():
-            await self.step()
 
     # endregion
 

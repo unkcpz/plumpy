@@ -631,6 +631,16 @@ class TestProcess(unittest.TestCase):
 
         ParentProcess().execute()
 
+    def test_processes_run_in_sequence(self):
+        """Run execute for two processes in sequence, to check the main thread event loop is intactive"""
+
+        class StackTest(plumpy.Process):
+            def run(self):
+                pass
+
+        StackTest().execute()
+        StackTest().execute()
+
     def test_call_soon(self):
         class CallSoon(plumpy.Process):
             def run(self):
