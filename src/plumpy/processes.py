@@ -285,7 +285,8 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
         # Don't allow the spec to be changed anymore
         self.spec().seal()
 
-        self._loop = loop if loop is not None else asyncio.get_event_loop()
+        # self._loop = loop or asyncio.get_running_loop()
+        self._loop = None
 
         self._setup_event_hooks()
 
@@ -1311,7 +1312,13 @@ class Process(StateMachine, persistence.Savable, metaclass=ProcessStateMachineMe
 
         if not self.has_terminated():
             coro = self.step_until_terminated()
-            with get_runner(loop=self.loop) as runner:
+            # FIXME: define loop in process init is problematic, since it may get the main thread
+            # event loop and close it unexpectly. I think should be only two type of entries where
+            # the event loop definition is clear.
+            # A. if there already a running loop, create a thread with event loop to offload run, and support nested
+            # B. if there is no loop, create its own that can nested using greenlet
+            loop = self.loop or asyncio.get_running_loop()
+            with get_runner(loop=loop) as runner:
                 print('I got runner: ', runner)
                 result = runner.run(coro)
 
